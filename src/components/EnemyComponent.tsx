@@ -3,10 +3,11 @@ import { Enemy, StatusEffect } from '../game/types'
 interface EnemyComponentProps {
   enemy: Enemy
   isTargetable?: boolean
+  isHit?: boolean
   onClick?: () => void
 }
 
-export default function EnemyComponent({ enemy, isTargetable = false, onClick }: EnemyComponentProps) {
+export default function EnemyComponent({ enemy, isTargetable = false, isHit = false, onClick }: EnemyComponentProps) {
   const getIntentIcon = () => {
     switch (enemy.intent) {
       case 'attack': return '⚔️'
@@ -76,8 +77,8 @@ export default function EnemyComponent({ enemy, isTargetable = false, onClick }:
   return (
     <div
       className={`enemy ${isTargetable ? 'enemy-targetable' : ''} ${
-        isDead ? 'opacity-40 grayscale' : ''
-      } w-44 sm:w-52 min-h-[200px] animate-fade-in-up`}
+        isDead ? 'enemy-dying' : ''
+      } ${isHit ? 'enemy-hit' : ''} w-44 sm:w-52 min-h-[200px] animate-fade-in-up`}
       onClick={isTargetable && !isDead ? onClick : undefined}
     >
       {/* Enemy Avatar + Name */}
@@ -99,7 +100,7 @@ export default function EnemyComponent({ enemy, isTargetable = false, onClick }:
       {/* Intent */}
       {!isDead && (
         <div className={`rounded-lg p-2.5 text-center border ${getIntentColor()} mb-2`}>
-          <div className="text-xl mb-0.5">{getIntentIcon()}</div>
+          <div className="text-xl mb-0.5 intent-icon">{getIntentIcon()}</div>
           {enemy.nextAction.damage && (
             <div className="text-red-400 font-black text-sm">{enemy.nextAction.damage} dmg</div>
           )}

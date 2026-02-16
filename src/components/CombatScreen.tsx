@@ -1,7 +1,15 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { CombatState, Card, Enemy, StatusEffect } from '../game/types'
 import CardComponent from './CardComponent'
 import EnemyComponent from './EnemyComponent'
+
+interface DamagePopup {
+  id: number
+  enemyId?: string
+  isPlayer?: boolean
+  amount: number
+  type: 'damage' | 'heal' | 'block'
+}
 
 interface CombatScreenProps {
   combatState: CombatState
@@ -13,6 +21,13 @@ interface CombatScreenProps {
 export default function CombatScreen({ combatState, onPlayCard, onEndTurn, onCombatEnd }: CombatScreenProps) {
   const [selectedCard, setSelectedCard] = useState<Card | null>(null)
   const [screenShake, setScreenShake] = useState(false)
+  const [hitEnemies, setHitEnemies] = useState<Set<string>>(new Set())
+  const [playerHit, setPlayerHit] = useState(false)
+  const [damagePopups, setDamagePopups] = useState<DamagePopup[]>([])
+  const [turnAnimating, setTurnAnimating] = useState(false)
+  const prevEnemyHp = useRef<Record<string, number>>({})
+  const prevPlayerHp = useRef(combatState.player.hp)
+  const popupCounter = useRef(0)
   
   useEffect(() => {
     if (combatState.combatEnded && combatState.victory) {
@@ -20,14 +35,51 @@ export default function CombatScreen({ combatState, onPlayCard, onEndTurn, onCom
       return () => clearTimeout(timer)
     }
   }, [combatState.combatEnded, combatState.victory, onCombatEnd])
-  
+
+  // Detect HP changes for damage/heal popups + hit animations
   useEffect(() => {
-    if (combatState.player.hp < 20) {
+    const newPopups: DamagePopup[] = []
+    
+    // Check enemy HP changes
+    combatState.enemies.forEach(enemy => {
+      const prevHp = prevEnemyHp.current[enemy.id]
+      if (prevHp !== undefined && enemy.hp < prevHp) {
+        const dmg = prevHp - enemy.hp
+        newPopups.push({ id: popupCounter.current++, enemyId: enemy.id, amount: dmg, type: 'damage' })
+        setHitEnemies(prev => new Set(prev).add(enemy.id))
+        setTimeout(() => setHitEnemies(prev => { const s = new Set(prev); s.delete(enemy.id); return s }), 400)
+      }
+      prevEnemyHp.current[enemy.id] = enemy.hp
+    })
+    
+    // Check player HP changes
+    if (prevPlayerHp.current > combatState.player.hp) {
+      const dmg = prevPlayerHp.current - combatState.player.hp
+      newPopups.push({ id: popupCounter.current++, isPlayer: true, amount: dmg, type: 'damage' })
+      setPlayerHit(true)
       setScreenShake(true)
-      const timer = setTimeout(() => setScreenShake(false), 500)
-      return () => clearTimeout(timer)
+      setTimeout(() => { setPlayerHit(false); setScreenShake(false) }, 500)
+    } else if (prevPlayerHp.current < combatState.player.hp) {
+      const heal = combatState.player.hp - prevPlayerHp.current
+      newPopups.push({ id: popupCounter.current++, isPlayer: true, amount: heal, type: 'heal' })
     }
-  }, [combatState.player.hp])
+    prevPlayerHp.current = combatState.player.hp
+    
+    if (newPopups.length > 0) {
+      setDamagePopups(prev => [...prev, ...newPopups])
+      setTimeout(() => {
+        setDamagePopups(prev => prev.filter(p => !newPopups.find(np => np.id === p.id)))
+      }, 900)
+    }
+  }, [combatState])
+
+  // Turn start animation
+  useEffect(() => {
+    if (combatState.isPlayerTurn) {
+      setTurnAnimating(true)
+      setTimeout(() => setTurnAnimating(false), 800)
+    }
+  }, [combatState.turn])
   
   const handleCardClick = (card: Card) => {
     if (combatState.combatEnded || !combatState.isPlayerTurn) return
@@ -96,18 +148,25 @@ export default function CombatScreen({ combatState, onPlayCard, onEndTurn, onCom
       <div className="flex-1 mb-4 flex items-start justify-center">
         <div className="flex flex-wrap justify-center gap-4">
           {combatState.enemies.map(enemy => (
-            <EnemyComponent
-              key={enemy.id}
-              enemy={enemy}
-              isTargetable={selectedCard?.type === 'attack' && enemy.hp > 0}
-              onClick={() => handleEnemyClick(enemy)}
-            />
+            <div key={enemy.id} className="relative">
+              <EnemyComponent
+                enemy={enemy}
+                isTargetable={selectedCard?.type === 'attack' && enemy.hp > 0}
+                isHit={hitEnemies.has(enemy.id)}
+                onClick={() => handleEnemyClick(enemy)}
+              />
+              {damagePopups
+                .filter(p => p.enemyId === enemy.id)
+                .map(p => (
+                  <div key={p.id} className="damage-number">-{p.amount}</div>
+                ))}
+            </div>
           ))}
         </div>
       </div>
       
       {/* Player Area (bottom) */}
-      <div className="panel p-4 border-t-2 border-gray-700/40 animate-slide-up">
+      <div className={`panel p-4 border-t-2 border-gray-700/40 animate-slide-up ${playerHit ? 'player-hit' : ''} ${turnAnimating ? 'turn-start' : ''}`}>
         {/* Player Stats Row */}
         <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
           <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -118,6 +177,17 @@ export default function CombatScreen({ combatState, onPlayCard, onEndTurn, onCom
             <span className={`text-sm font-bold ${hpPercent < 30 ? 'text-red-400' : 'text-green-400'}`}>
               {combatState.player.hp}/{combatState.player.maxHp}
             </span>
+            
+            {/* Player damage/heal popups */}
+            <div className="relative">
+              {damagePopups
+                .filter(p => p.isPlayer)
+                .map(p => (
+                  <div key={p.id} className={`damage-number ${p.type === 'heal' ? 'damage-number-heal' : p.type === 'block' ? 'damage-number-block' : ''}`}>
+                    {p.type === 'damage' ? `-${p.amount}` : `+${p.amount}`}
+                  </div>
+                ))}
+            </div>
             
             {/* Player Status Effects */}
             <div className="flex gap-1 flex-wrap">
@@ -137,13 +207,14 @@ export default function CombatScreen({ combatState, onPlayCard, onEndTurn, onCom
         {/* Hand */}
         <div className="card-fan flex justify-center items-end min-h-[180px] sm:min-h-[200px] pb-1 overflow-x-auto">
           {combatState.hand.map((card, index) => (
-            <CardComponent
-              key={`${card.id}-${index}`}
-              card={card}
-              isPlayable={combatState.energy >= card.cost && combatState.isPlayerTurn && !combatState.combatEnded}
-              isSelected={selectedCard?.id === card.id}
-              onClick={() => handleCardClick(card)}
-            />
+            <div key={`${card.id}-${index}`} className="card-draw" style={{ animationDelay: `${index * 60}ms` }}>
+              <CardComponent
+                card={card}
+                isPlayable={combatState.energy >= card.cost && combatState.isPlayerTurn && !combatState.combatEnded}
+                isSelected={selectedCard?.id === card.id}
+                onClick={() => handleCardClick(card)}
+              />
+            </div>
           ))}
         </div>
         
@@ -160,8 +231,8 @@ export default function CombatScreen({ combatState, onPlayCard, onEndTurn, onCom
           <div className="panel p-8 text-center max-w-md mx-4">
             {combatState.victory ? (
               <>
-                <div className="text-6xl mb-4">🏆</div>
-                <h2 className="text-3xl font-black text-green-400 mb-3">Victory!</h2>
+                <div className="text-6xl mb-4 animate-victory">🏆</div>
+                <h2 className="text-3xl font-black text-green-400 mb-3 animate-victory">Victory!</h2>
                 <p className="text-gray-400 mb-4">Enemies defeated! Choose a card reward.</p>
                 <div className="text-xs text-gray-600">Proceeding...</div>
               </>
