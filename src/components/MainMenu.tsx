@@ -4,36 +4,41 @@ interface MainMenuProps {
 
 export default function MainMenu({ onStartGame }: MainMenuProps) {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[70vh] text-center">
-      <div className="mb-8">
-        <h1 className="text-6xl font-bold mb-4 bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 bg-clip-text text-transparent">
-          ⚔️ Deck Dungeon
+    <div className="flex flex-col items-center justify-center min-h-[80vh] text-center px-4 animate-fade-in-up">
+      <div className="mb-10">
+        <div className="text-7xl mb-4">⚔️</div>
+        <h1 className="text-5xl sm:text-6xl font-black mb-3 bg-gradient-to-r from-purple-400 via-pink-400 to-red-400 bg-clip-text text-transparent">
+          Deck Dungeon
         </h1>
-        <p className="text-xl text-gray-300 max-w-2xl">
-          A roguelike deck-building adventure inspired by Slay the Spire. 
-          Build your deck, climb the tower, and conquer the dungeon!
+        <p className="text-lg text-gray-400 max-w-md mx-auto">
+          A roguelike deck-building adventure. Build your deck, climb the tower, conquer the dungeon.
         </p>
       </div>
       
-      <div className="space-y-4">
-        <button 
-          onClick={onStartGame}
-          className="game-button text-xl px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500"
-        >
-          ⚡ Start New Run
-        </button>
-        
-        <div className="text-gray-400 text-sm space-y-2">
-          <p>🎯 Navigate through 3 acts of increasing difficulty</p>
-          <p>⚔️ Battle enemies with strategic card play</p>
-          <p>🃏 Collect powerful cards and relics</p>
-          <p>💀 Survive to reach the final boss</p>
-        </div>
-      </div>
+      <button 
+        onClick={onStartGame}
+        className="game-button text-xl px-10 py-5 mb-8 bg-gradient-to-b from-purple-600 to-purple-800 border-purple-400/50 hover:shadow-xl hover:shadow-purple-500/20"
+      >
+        ⚡ Start New Run
+      </button>
       
-      <div className="mt-16 text-gray-500 text-sm">
-        <p>Tips: Click cards to play them • Target enemies for attack cards</p>
-        <p>Mobile: Tap cards and enemies • Optimized for touch</p>
+      <div className="grid grid-cols-2 gap-3 text-sm text-gray-500 max-w-sm">
+        <div className="panel p-3 text-center">
+          <div className="text-2xl mb-1">🗺️</div>
+          <div>3 Acts</div>
+        </div>
+        <div className="panel p-3 text-center">
+          <div className="text-2xl mb-1">⚔️</div>
+          <div>Strategic Combat</div>
+        </div>
+        <div className="panel p-3 text-center">
+          <div className="text-2xl mb-1">🃏</div>
+          <div>Deck Building</div>
+        </div>
+        <div className="panel p-3 text-center">
+          <div className="text-2xl mb-1">💀</div>
+          <div>Boss Fights</div>
+        </div>
       </div>
     </div>
   )

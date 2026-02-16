@@ -19,11 +19,11 @@ export default function EnemyComponent({ enemy, isTargetable = false, onClick }:
   
   const getIntentColor = () => {
     switch (enemy.intent) {
-      case 'attack': return 'text-red-400'
-      case 'defend': return 'text-blue-400'
-      case 'buff': return 'text-green-400'
-      case 'debuff': return 'text-purple-400'
-      default: return 'text-gray-400'
+      case 'attack': return 'text-red-400 border-red-500/30 bg-red-950/40'
+      case 'defend': return 'text-blue-400 border-blue-500/30 bg-blue-950/40'
+      case 'buff': return 'text-green-400 border-green-500/30 bg-green-950/40'
+      case 'debuff': return 'text-purple-400 border-purple-500/30 bg-purple-950/40'
+      default: return 'text-gray-400 border-gray-500/30 bg-gray-950/40'
     }
   }
   
@@ -39,13 +39,12 @@ export default function EnemyComponent({ enemy, isTargetable = false, onClick }:
           {effect === 'regen' && '💚'}
           {effect === 'thorns' && '🌹'}
           {effect === 'ritual' && '🔮'}
-          <span className="ml-1">{amount}</span>
+          <span className="ml-0.5">{amount}</span>
         </div>
       ))
   }
   
   const getEnemyEmoji = () => {
-    // Simple mapping based on enemy name
     if (enemy.name.toLowerCase().includes('slime')) return '🟢'
     if (enemy.name.toLowerCase().includes('cultist')) return '👺'
     if (enemy.name.toLowerCase().includes('guardian')) return '🗿'
@@ -68,88 +67,71 @@ export default function EnemyComponent({ enemy, isTargetable = false, onClick }:
     if (enemy.name.toLowerCase().includes('awakened')) return '👁️'
     if (enemy.name.toLowerCase().includes('time')) return '⏰'
     if (enemy.name.toLowerCase().includes('donu') || enemy.name.toLowerCase().includes('deca')) return '⚖️'
-    return '👾' // Default enemy emoji
+    return '👾'
   }
   
   const isDead = enemy.hp <= 0
+  const hpPercent = (enemy.hp / enemy.maxHp) * 100
   
   return (
     <div
       className={`enemy ${isTargetable ? 'enemy-targetable' : ''} ${
-        isDead ? 'opacity-50 grayscale' : ''
-      } w-48 min-h-[200px]`}
+        isDead ? 'opacity-40 grayscale' : ''
+      } w-44 sm:w-52 min-h-[200px] animate-fade-in-up`}
       onClick={isTargetable && !isDead ? onClick : undefined}
     >
-      {/* Enemy Name and Icon */}
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="font-semibold text-lg truncate">{enemy.name}</h3>
-        <div className="text-3xl">{getEnemyEmoji()}</div>
+      {/* Enemy Avatar + Name */}
+      <div className="text-center mb-3">
+        <div className="text-4xl mb-1">{getEnemyEmoji()}</div>
+        <h3 className="font-bold text-sm text-gray-200 truncate">{enemy.name}</h3>
       </div>
       
       {/* HP Bar */}
       <div className="mb-3">
-        <div className="flex justify-between items-center mb-1">
-          <span className="text-sm text-gray-400">HP</span>
-          <span className="text-sm font-medium">
-            {enemy.hp}/{enemy.maxHp}
-          </span>
-        </div>
         <div className="hp-bar w-full h-3">
-          <div 
-            className="hp-fill bg-red-500"
-            style={{ width: `${(enemy.hp / enemy.maxHp) * 100}%` }}
-          />
+          <div className="hp-fill hp-fill-red" style={{ width: `${hpPercent}%` }} />
+        </div>
+        <div className="text-center text-xs font-bold text-gray-400 mt-1">
+          {enemy.hp}/{enemy.maxHp}
         </div>
       </div>
       
       {/* Intent */}
       {!isDead && (
-        <div className="mb-3">
-          <div className="bg-gray-700 rounded-lg p-3 text-center">
-            <div className={`text-2xl ${getIntentColor()} mb-1`}>
-              {getIntentIcon()}
+        <div className={`rounded-lg p-2.5 text-center border ${getIntentColor()} mb-2`}>
+          <div className="text-xl mb-0.5">{getIntentIcon()}</div>
+          {enemy.nextAction.damage && (
+            <div className="text-red-400 font-black text-sm">{enemy.nextAction.damage} dmg</div>
+          )}
+          {enemy.nextAction.block && (
+            <div className="text-blue-400 font-black text-sm">{enemy.nextAction.block} blk</div>
+          )}
+          {enemy.nextAction.statusEffect && (
+            <div className="text-yellow-400 text-xs font-medium">
+              {enemy.nextAction.statusEffect.type} +{enemy.nextAction.statusEffect.amount}
             </div>
-            <div className="text-xs text-gray-300 capitalize">
-              {enemy.intent}
-            </div>
-            
-            {/* Intent Details */}
-            {enemy.nextAction.damage && (
-              <div className="text-red-400 font-bold text-sm mt-1">
-                {enemy.nextAction.damage} damage
-              </div>
-            )}
-            {enemy.nextAction.block && (
-              <div className="text-blue-400 font-bold text-sm mt-1">
-                {enemy.nextAction.block} block
-              </div>
-            )}
-            {enemy.nextAction.statusEffect && (
-              <div className="text-yellow-400 text-xs mt-1">
-                {enemy.nextAction.statusEffect.type} +{enemy.nextAction.statusEffect.amount}
-              </div>
-            )}
-          </div>
+          )}
+          {!enemy.nextAction.damage && !enemy.nextAction.block && !enemy.nextAction.statusEffect && (
+            <div className="text-xs capitalize font-medium">{enemy.intent}</div>
+          )}
         </div>
       )}
       
       {/* Status Effects */}
       {Object.values(enemy.statusEffects).some(amount => amount > 0) && (
-        <div className="flex flex-wrap gap-1">
+        <div className="flex flex-wrap gap-1 justify-center">
           {renderStatusEffects(enemy.statusEffects)}
         </div>
       )}
       
-      {/* Death Indicator */}
       {isDead && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-4xl">💀</div>
+          <div className="text-5xl opacity-60">💀</div>
         </div>
       )}
       
-      {/* Targeting Highlight */}
       {isTargetable && !isDead && (
-        <div className="absolute inset-0 border-2 border-yellow-400 rounded-lg animate-pulse pointer-events-none" />
+        <div className="absolute inset-0 border-2 border-yellow-400 rounded-xl animate-pulse pointer-events-none" />
       )}
     </div>
   )
