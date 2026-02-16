@@ -53,12 +53,14 @@ export default function Home() {
                 <span className="text-gray-400 text-xs">FLOOR</span>
                 <span className="text-white">{gameState.currentFloor}</span>
               </div>
-              <div className="hud-bar">
-                <span className="text-red-400">♥</span>
-                <span className={gameState.player.hp < gameState.player.maxHp * 0.3 ? 'text-red-400' : 'text-green-400'}>
-                  {gameState.player.hp}/{gameState.player.maxHp}
-                </span>
-              </div>
+              {gameState.gamePhase !== 'combat' && (
+                <div className="hud-bar">
+                  <span className="text-red-400">♥</span>
+                  <span className={gameState.player.hp < gameState.player.maxHp * 0.3 ? 'text-red-400' : 'text-green-400'}>
+                    {gameState.player.hp}/{gameState.player.maxHp}
+                  </span>
+                </div>
+              )}
               <div className="hud-bar">
                 <span className="text-yellow-400">⬡</span>
                 <span className="text-yellow-400">{gameState.player.gold}</span>
