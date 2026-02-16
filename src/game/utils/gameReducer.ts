@@ -15,10 +15,19 @@ export type GameAction =
   | { type: 'REST_HEAL' }
   | { type: 'REST_UPGRADE'; cardId: string }
   | { type: 'REST_REMOVE'; cardId: string }
-  | { type: 'BUY_CARD'; cardId: string }
+  | { type: 'BUY_CARD'; card: Card; price: number }
+  | { type: 'BUY_POTION'; potion: import('../types').Potion; price: number }
+  | { type: 'SHOP_REMOVE_CARD'; cardId: string; price: number }
+  | { type: 'SHOP_HEAL'; amount: number; price: number }
+  | { type: 'LEAVE_SHOP' }
   | { type: 'BUY_RELIC'; relicId: string }
   | { type: 'REMOVE_CARD'; cardId: string }
   | { type: 'CHOOSE_EVENT_OPTION'; choiceId: string }
+  | { type: 'EVENT_GAIN_GOLD'; amount: number }
+  | { type: 'EVENT_HEAL'; amount: number }
+  | { type: 'EVENT_DAMAGE'; amount: number }
+  | { type: 'EVENT_GAIN_MAX_HP'; amount: number }
+  | { type: 'LEAVE_EVENT' }
   | { type: 'USE_POTION'; potionId: string; targetEnemyId?: string }
   | { type: 'ADVANCE_ACT' }
   | { type: 'GAME_OVER' }
@@ -303,6 +312,89 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         gamePhase: 'map',
         currentNode: undefined
       }
+    }
+    
+    case 'BUY_CARD': {
+      if (state.player.gold < action.price) return state
+      return {
+        ...state,
+        player: {
+          ...state.player,
+          gold: state.player.gold - action.price,
+          deck: [...state.player.deck, { ...action.card }]
+        }
+      }
+    }
+    
+    case 'BUY_POTION': {
+      if (state.player.gold < action.price || state.player.potions.length >= 3) return state
+      return {
+        ...state,
+        player: {
+          ...state.player,
+          gold: state.player.gold - action.price,
+          potions: [...state.player.potions, action.potion]
+        }
+      }
+    }
+    
+    case 'SHOP_REMOVE_CARD': {
+      if (state.player.gold < action.price) return state
+      const idx = state.player.deck.findIndex(c => c.id === action.cardId)
+      if (idx === -1) return state
+      const newDeck = [...state.player.deck]
+      newDeck.splice(idx, 1)
+      return {
+        ...state,
+        player: {
+          ...state.player,
+          gold: state.player.gold - action.price,
+          deck: newDeck
+        }
+      }
+    }
+    
+    case 'SHOP_HEAL': {
+      if (state.player.gold < action.price) return state
+      return {
+        ...state,
+        player: {
+          ...state.player,
+          gold: state.player.gold - action.price,
+          hp: Math.min(state.player.maxHp, state.player.hp + action.amount)
+        }
+      }
+    }
+    
+    case 'EVENT_GAIN_GOLD':
+      return { ...state, player: { ...state.player, gold: state.player.gold + action.amount } }
+    
+    case 'EVENT_HEAL':
+      return { ...state, player: { ...state.player, hp: Math.min(state.player.maxHp, state.player.hp + action.amount) } }
+    
+    case 'EVENT_DAMAGE': {
+      const newHp = state.player.hp - action.amount
+      if (newHp <= 0) return { ...state, player: { ...state.player, hp: 0 }, gamePhase: 'game_over' }
+      return { ...state, player: { ...state.player, hp: newHp } }
+    }
+    
+    case 'EVENT_GAIN_MAX_HP':
+      return { ...state, player: { ...state.player, maxHp: state.player.maxHp + action.amount, hp: state.player.hp + action.amount } }
+    
+    case 'LEAVE_EVENT': {
+      const newState = { ...state }
+      newState.map = [...state.map]
+      getAvailableNodes(newState.map, state.currentNode?.id)
+      newState.runStats = { ...state.runStats, floorsCleared: state.runStats.floorsCleared + 1 }
+      return { ...newState, gamePhase: 'map', currentNode: undefined }
+    }
+    
+    case 'LEAVE_SHOP': {
+      const newState = { ...state }
+      newState.map = [...state.map]
+      getAvailableNodes(newState.map, state.currentNode?.id)
+      newState.runStats = { ...state.runStats, floorsCleared: state.runStats.floorsCleared + 1 }
+      return { ...newState, gamePhase: 'map', currentNode: undefined }
     }
     
     case 'ADVANCE_ACT': {

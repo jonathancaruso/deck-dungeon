@@ -9,6 +9,8 @@ import CardRewardScreen from '../components/CardRewardScreen'
 import RestScreen from '../components/RestScreen'
 import GameOverScreen from '../components/GameOverScreen'
 import VictoryScreen from '../components/VictoryScreen'
+import ShopScreen from '../components/ShopScreen'
+import EventScreen from '../components/EventScreen'
 
 export default function Home() {
   const [gameState, dispatch] = useReducer(gameReducer, initialGameState)
@@ -111,6 +113,30 @@ export default function Home() {
             onRestHeal={() => dispatch({ type: 'REST_HEAL' })}
             onRestUpgrade={(cardId) => dispatch({ type: 'REST_UPGRADE', cardId })}
             onRestRemove={(cardId) => dispatch({ type: 'REST_REMOVE', cardId })}
+          />
+        )}
+        
+        {gameState.gamePhase === 'shop' && (
+          <ShopScreen
+            player={gameState.player}
+            act={gameState.currentAct}
+            onBuyCard={(card) => dispatch({ type: 'BUY_CARD', card, price: card.rarity === 'rare' ? 150 : card.rarity === 'uncommon' ? 100 : 50 })}
+            onBuyPotion={(potion) => dispatch({ type: 'BUY_POTION', potion, price: 50 })}
+            onRemoveCard={(cardId) => dispatch({ type: 'SHOP_REMOVE_CARD', cardId, price: 75 })}
+            onHeal={(amount) => dispatch({ type: 'SHOP_HEAL', amount, price: 30 })}
+            onLeave={() => dispatch({ type: 'LEAVE_SHOP' })}
+          />
+        )}
+        
+        {gameState.gamePhase === 'event' && (
+          <EventScreen
+            player={gameState.player}
+            act={gameState.currentAct}
+            onGainGold={(amount) => dispatch({ type: 'EVENT_GAIN_GOLD', amount })}
+            onHeal={(amount) => dispatch({ type: 'EVENT_HEAL', amount })}
+            onTakeDamage={(amount) => dispatch({ type: 'EVENT_DAMAGE', amount })}
+            onGainMaxHp={(amount) => dispatch({ type: 'EVENT_GAIN_MAX_HP', amount })}
+            onLeave={() => dispatch({ type: 'LEAVE_EVENT' })}
           />
         )}
         
