@@ -32,7 +32,7 @@ export default function CombatScreen({ combatState, onPlayCard, onEndTurn, onCom
   const [damagePopups, setDamagePopups] = useState<DamagePopup[]>([])
   const [turnAnimating, setTurnAnimating] = useState(false)
   const [showTurnBanner, setShowTurnBanner] = useState<'player' | 'enemy' | null>(null)
-  const [playingCardId, setPlayingCardId] = useState<string | null>(null)
+  const [playingCardIndex, setPlayingCardIndex] = useState<number | null>(null)
   const [slashEffects, setSlashEffects] = useState<SlashEffect[]>([])
   const [blockGained, setBlockGained] = useState(false)
   const [shieldFlash, setShieldFlash] = useState(false)
@@ -140,19 +140,23 @@ export default function CombatScreen({ combatState, onPlayCard, onEndTurn, onCom
     prevPlayerBlock.current = currentBlock
   }, [combatState.player.block])
 
-  const handleCardClick = (card: Card) => {
+  const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null)
+
+  const handleCardClick = (card: Card, index: number) => {
     if (combatState.combatEnded || !combatState.isPlayerTurn) return
     if (combatState.energy < card.cost) return
     
     if (card.type === 'attack') {
-      setSelectedCard(selectedCard?.id === card.id ? null : card)
+      setSelectedCard(selectedCard === card ? null : card)
+      setSelectedCardIndex(selectedCard === card ? null : index)
     } else {
       // Play card with animation
-      setPlayingCardId(card.id)
+      setPlayingCardIndex(index)
       setTimeout(() => {
         onPlayCard(card.id)
-        setPlayingCardId(null)
+        setPlayingCardIndex(null)
         setSelectedCard(null)
+        setSelectedCardIndex(null)
       }, 250)
     }
   }
@@ -161,12 +165,13 @@ export default function CombatScreen({ combatState, onPlayCard, onEndTurn, onCom
     if (!selectedCard || combatState.combatEnded || !combatState.isPlayerTurn) return
     if (enemy.hp <= 0) return
     // Play card with animation
-    setPlayingCardId(selectedCard.id)
+    setPlayingCardIndex(selectedCardIndex)
     const cardId = selectedCard.id
     setTimeout(() => {
       onPlayCard(cardId, enemy.id)
-      setPlayingCardId(null)
+      setPlayingCardIndex(null)
       setSelectedCard(null)
+      setSelectedCardIndex(null)
     }, 250)
   }
   
@@ -303,14 +308,14 @@ export default function CombatScreen({ combatState, onPlayCard, onEndTurn, onCom
           {combatState.hand.map((card, index) => (
             <div
               key={`${card.id}-${index}`}
-              className={`card-draw ${playingCardId === card.id ? 'card-playing' : ''}`}
+              className={`card-draw ${playingCardIndex === index ? 'card-playing' : ''}`}
               style={{ animationDelay: `${index * 60}ms` }}
             >
               <CardComponent
                 card={card}
-                isPlayable={combatState.energy >= card.cost && combatState.isPlayerTurn && !combatState.combatEnded && playingCardId === null}
-                isSelected={selectedCard?.id === card.id}
-                onClick={() => handleCardClick(card)}
+                isPlayable={combatState.energy >= card.cost && combatState.isPlayerTurn && !combatState.combatEnded && playingCardIndex === null}
+                isSelected={selectedCard === card && selectedCardIndex === index}
+                onClick={() => handleCardClick(card, index)}
               />
             </div>
           ))}
