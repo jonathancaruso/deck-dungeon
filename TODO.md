@@ -8,11 +8,12 @@
 - [ ] Additional relics
 - [ ] More event encounters
 - [ ] Mobile touch optimization
-- [ ] Save/load game state (localStorage)
+
 - [ ] Stats tracking (runs completed, cards played, enemies killed)
 - [ ] Daily challenge mode (seeded runs)
 
 ## Done
+- [x] Save/load game state with Continue Run button (localStorage)
 - [x] Combat animations + block system (slash VFX, shield flash, block mechanic, turn banners)
 - [x] Core combat system with status effects
 - [x] 40+ cards (Attack, Skill, Power)
