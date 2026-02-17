@@ -478,10 +478,11 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 }
 
 function startCombat(state: GameState, enemyIds: string[]): GameState {
-  const enemies: Enemy[] = enemyIds.map(enemyId => {
+  const enemies: Enemy[] = enemyIds.map((enemyId, index) => {
     const enemyTemplate = ENEMIES[enemyId]
     return {
       ...enemyTemplate,
+      id: `${enemyTemplate.id}_${index}`,
       hp: enemyTemplate.maxHp,
       statusEffects: {}
     }
