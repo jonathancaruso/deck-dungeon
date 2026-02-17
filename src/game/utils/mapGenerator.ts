@@ -98,6 +98,13 @@ export function getAvailableNodes(nodes: MapNode[], completedNodeId?: string): M
   // Mark completed node as completed
   completedNode.completed = true
   
+  // Mark all other nodes on the same floor as unavailable
+  nodes.forEach(n => {
+    if (n.y === completedNode.y && n.id !== completedNode.id) {
+      n.available = false
+    }
+  })
+  
   // Make connected nodes available
   completedNode.connections.forEach(connectionId => {
     const connectedNode = nodes.find(n => n.id === connectionId)
