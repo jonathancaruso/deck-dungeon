@@ -125,7 +125,7 @@ export default function CombatScreen({ combatState, onPlayCard, onEndTurn, onCom
   
   // Detect block gain for shield flash
   useEffect(() => {
-    const currentBlock = (combatState.player as any).block || 0
+    const currentBlock = combatState.player.block || 0
     if (currentBlock > prevPlayerBlock.current && currentBlock > 0) {
       setShieldFlash(true)
       setBlockGained(true)
@@ -138,7 +138,7 @@ export default function CombatScreen({ combatState, onPlayCard, onEndTurn, onCom
       }, 700)
     }
     prevPlayerBlock.current = currentBlock
-  }, [(combatState.player as any).block])
+  }, [combatState.player.block])
 
   const handleCardClick = (card: Card) => {
     if (combatState.combatEnded || !combatState.isPlayerTurn) return
@@ -188,7 +188,7 @@ export default function CombatScreen({ combatState, onPlayCard, onEndTurn, onCom
   }
   
   const hpPercent = (combatState.player.hp / combatState.player.maxHp) * 100
-  const playerBlock = (combatState.player as any).block || 0
+  const playerBlock = combatState.player.block || 0
   
   return (
     <div className={`flex flex-col h-full min-h-[80vh] ${screenShake ? 'screen-shake' : ''}`}>

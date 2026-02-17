@@ -448,34 +448,6 @@ body::before {
   animation: intentBob 2s ease-in-out infinite;
 }
 
-/* ========== SLASH EFFECTS ========== */
-@keyframes slashSwipe0 {
-  0% { clip-path: polygon(40% 0%, 42% 0%, 58% 100%, 56% 100%); opacity: 1; }
-  40% { opacity: 1; }
-  100% { clip-path: polygon(40% 0%, 42% 0%, 58% 100%, 56% 100%); opacity: 0; transform: scale(1.2); }
-}
-@keyframes slashSwipe1 {
-  0% { clip-path: polygon(0% 30%, 0% 28%, 100% 70%, 100% 72%); opacity: 1; }
-  40% { opacity: 1; }
-  100% { clip-path: polygon(0% 30%, 0% 28%, 100% 70%, 100% 72%); opacity: 0; transform: scale(1.2); }
-}
-@keyframes slashSwipe2 {
-  0% { clip-path: polygon(100% 20%, 100% 22%, 0% 80%, 0% 78%); opacity: 1; }
-  40% { opacity: 1; }
-  100% { clip-path: polygon(100% 20%, 100% 22%, 0% 80%, 0% 78%); opacity: 0; transform: scale(1.2); }
-}
-
-.slash-effect {
-  position: absolute;
-  inset: -10px;
-  z-index: 25;
-  pointer-events: none;
-  background: linear-gradient(90deg, transparent 10%, rgba(255, 255, 255, 0.9) 45%, rgba(255, 200, 100, 0.8) 55%, transparent 90%);
-}
-.slash-variant-0 { animation: slashSwipe0 0.4s ease-out forwards; }
-.slash-variant-1 { animation: slashSwipe1 0.4s ease-out forwards; }
-.slash-variant-2 { animation: slashSwipe2 0.4s ease-out forwards; }
-
 /* Energy spend pulse */
 @keyframes energySpend {
   0% { transform: scale(1); filter: brightness(1); }

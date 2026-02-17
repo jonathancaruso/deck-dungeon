@@ -38,6 +38,7 @@ export const initialGameState: GameState = {
   player: {
     hp: 70,
     maxHp: 70,
+    block: 0,
     gold: 99,
     deck: STARTER_DECK.map(cardId => ({ ...CARDS[cardId] })),
     relics: [],
@@ -199,6 +200,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       // Start new turn
       newCombatState.turn++
       newCombatState.energy = newCombatState.maxEnergy
+      newCombatState.player = { ...newCombatState.player, block: 0 } // Reset block each turn
       newCombatState = drawCards(newCombatState, 5)
       
       return {

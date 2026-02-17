@@ -64,8 +64,7 @@ export function applyCardEffects(card: Card, combatState: CombatState, targetEne
   // Apply block
   if (card.block) {
     const block = calculateCardBlock(card, combatState)
-    newState.player.statusEffects.strength = (newState.player.statusEffects.strength || 0) // Block doesn't use strength
-    // Apply block logic here - in a full implementation you'd track player block
+    newState.player = { ...newState.player, block: (newState.player.block || 0) + block }
   }
   
   // Apply status effects
@@ -174,8 +173,21 @@ export function enemyAI(enemy: Enemy, combatState: CombatState): void {
   switch (action.type) {
     case 'attack':
       if (action.damage) {
-        // Apply damage to player (accounting for block in full implementation)
-        combatState.player.hp = Math.max(0, combatState.player.hp - action.damage)
+        let damage = action.damage
+        // Apply vulnerable to player
+        const playerBlock = combatState.player.block || 0
+        if (playerBlock > 0) {
+          if (playerBlock >= damage) {
+            combatState.player.block = playerBlock - damage
+            damage = 0
+          } else {
+            damage -= playerBlock
+            combatState.player.block = 0
+          }
+        }
+        if (damage > 0) {
+          combatState.player.hp = Math.max(0, combatState.player.hp - damage)
+        }
       }
       break
     case 'defend':

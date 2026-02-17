@@ -90,6 +90,7 @@ export interface EventConsequence {
 export interface Player {
   hp: number
   maxHp: number
+  block: number
   gold: number
   deck: Card[]
   relics: Relic[]
