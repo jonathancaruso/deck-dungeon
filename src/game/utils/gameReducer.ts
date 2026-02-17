@@ -1,7 +1,8 @@
-import { GameState, CombatState, Card, Enemy } from '../types'
+import { GameState, CombatState, Card, Enemy, Potion } from '../types'
 import { CARDS, STARTER_DECK } from '../data/cards'
 import { ENEMIES, ENEMY_ENCOUNTERS } from '../data/enemies'
 import { RELICS } from '../data/relics'
+import { POTIONS } from '../data/potions'
 import { generateMap, getAvailableNodes } from './mapGenerator'
 import { shuffleDeck, drawCards, applyCardEffects, processStatusEffects, enemyAI } from './combat'
 
@@ -9,7 +10,7 @@ export type GameAction =
   | { type: 'START_NEW_GAME' }
   | { type: 'ENTER_NODE'; nodeId: string }
   | { type: 'START_COMBAT'; enemies: string[] }
-  | { type: 'PLAY_CARD'; cardId: string; targetEnemyId?: string }
+  | { type: 'PLAY_CARD'; cardId: string; cardIndex?: number; targetEnemyId?: string }
   | { type: 'END_TURN' }
   | { type: 'CHOOSE_CARD_REWARD'; cardId: string | null }
   | { type: 'SET_PHASE'; phase: GameState['gamePhase'] }
@@ -127,7 +128,10 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case 'PLAY_CARD': {
       if (!state.combatState || state.gamePhase !== 'combat') return state
       
-      const card = state.combatState.hand.find(c => c.id === action.cardId)
+      // FIX BUG-11: Use cardIndex when available for precise card selection
+      const card = action.cardIndex !== undefined 
+        ? state.combatState.hand[action.cardIndex]
+        : state.combatState.hand.find(c => c.id === action.cardId)
       if (!card) return state
       if (card.special === 'unplayable') return state
       
@@ -251,9 +255,24 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         newCombatState.player.statusEffects.strength = (newCombatState.player.statusEffects.strength || 0) + 2
       }
       
+      // Relic: demon_heart — gain 1 Strength at start of turn
+      if (state.player.relics.some(r => r.effect === 'turn_strength')) {
+        newCombatState.player.statusEffects.strength = (newCombatState.player.statusEffects.strength || 0) + 1
+      }
+      
+      // Relic: soul_gem — lose 1 HP at start of turn
+      if (state.player.relics.some(r => r.effect === 'energy_hp_cost')) {
+        newCombatState.player.hp = Math.max(1, newCombatState.player.hp - 1)
+      }
+      
       // Battle Trance: draw 1 extra card
       const hasBattleTrance = newCombatState.activePowers.some(p => p.special === 'battle_trance')
-      newCombatState = drawCards(newCombatState, hasBattleTrance ? 6 : 5)
+      // Relic: draw_ring — draw 1 extra card
+      const hasDrawRing = state.player.relics.some(r => r.effect === 'extra_draw')
+      let drawCount = 5
+      if (hasBattleTrance) drawCount += 1
+      if (hasDrawRing) drawCount += 1
+      newCombatState = drawCards(newCombatState, drawCount)
       
       return {
         ...state,
@@ -265,12 +284,28 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       if (!state.combatState) return state
       
       let newState = { ...state }
+      newState.player = { ...state.player, deck: [...state.player.deck] }
       
       if (action.cardId) {
         const card = CARDS[action.cardId]
         if (card) {
           newState.player.deck.push({ ...card })
         }
+      }
+      
+      // FIX BUG-13: Grant gold reward after combat
+      const goldReward = 15 + Math.floor(Math.random() * 10) + (state.currentNode?.type === 'elite' ? 15 : 0) + (state.currentNode?.type === 'boss' ? 30 : 0)
+      newState.player = { ...newState.player, gold: newState.player.gold + goldReward }
+      
+      // Apply relic effects after combat
+      if (newState.player.relics.some(r => r.effect === 'hp_after_combat') && state.currentNode?.type !== 'boss') {
+        newState.player = { ...newState.player, maxHp: newState.player.maxHp + 3, hp: newState.player.hp + 3 }
+      }
+      if (newState.player.relics.some(r => r.effect === 'gold_per_combat')) {
+        newState.player = { ...newState.player, gold: newState.player.gold + 10 }
+      }
+      if (newState.player.relics.some(r => r.effect === 'heal_after_combat')) {
+        newState.player = { ...newState.player, hp: Math.min(newState.player.maxHp, newState.player.hp + 2) }
       }
       
       // Update map availability
@@ -346,7 +381,11 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
     
     case 'REST_REMOVE': {
-      const newDeck = state.player.deck.filter(c => c.id !== action.cardId)
+      // FIX BUG-12: Only remove first matching card, not all copies
+      const removeIdx = state.player.deck.findIndex(c => c.id === action.cardId)
+      if (removeIdx === -1) return state
+      const newDeck = [...state.player.deck]
+      newDeck.splice(removeIdx, 1)
       
       const newState = {
         ...state,
@@ -459,6 +498,56 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return { ...newState, gamePhase: 'map', currentNode: undefined }
     }
     
+    case 'USE_POTION': {
+      if (!state.combatState || state.gamePhase !== 'combat') return state
+      const potionIndex = state.player.potions.findIndex(p => p.id === action.potionId)
+      if (potionIndex === -1) return state
+      
+      const potion = state.player.potions[potionIndex]
+      const newPotions = [...state.player.potions]
+      newPotions.splice(potionIndex, 1)
+      
+      let newCombat = { ...state.combatState }
+      let newPlayer = { ...state.player, potions: newPotions }
+      
+      switch (potion.effect) {
+        case 'heal_20':
+          newCombat.player = { ...newCombat.player, hp: Math.min(newCombat.player.maxHp, newCombat.player.hp + 20) }
+          newPlayer.hp = newCombat.player.hp
+          break
+        case 'strength_2':
+          newCombat.player.statusEffects = { ...newCombat.player.statusEffects, strength: (newCombat.player.statusEffects.strength || 0) + 2 }
+          break
+        case 'block_12':
+          newCombat.player = { ...newCombat.player, block: (newCombat.player.block || 0) + 12 }
+          break
+        case 'damage_all_20':
+          newCombat.enemies.forEach(e => { if (e.hp > 0) e.hp = Math.max(0, e.hp - 20) })
+          break
+        case 'draw_3': {
+          newCombat = drawCards(newCombat, 3)
+          break
+        }
+        case 'poison_6': {
+          const target = action.targetEnemyId ? newCombat.enemies.find(e => e.id === action.targetEnemyId) : newCombat.enemies.find(e => e.hp > 0)
+          if (target) target.statusEffects.poison = (target.statusEffects.poison || 0) + 6
+          break
+        }
+        case 'energy_2':
+          newCombat.energy += 2
+          break
+      }
+      
+      // Check if combat ended
+      const alive = newCombat.enemies.filter(e => e.hp > 0)
+      if (alive.length === 0) {
+        newCombat.combatEnded = true
+        newCombat.victory = true
+      }
+      
+      return { ...state, player: newPlayer, combatState: newCombat }
+    }
+    
     case 'ADVANCE_ACT': {
       if (state.currentAct >= 3) {
         return {
@@ -518,15 +607,41 @@ function startCombat(state: GameState, enemyIds: string[]): GameState {
   const initialHand = shuffledDeck.slice(0, 5)
   const drawPile = shuffledDeck.slice(5)
   
+  // Base energy
+  let startEnergy = 3
+  let startMaxEnergy = 3
+  let startBlock = 0
+  const playerRelics = state.player.relics
+  
+  // Apply relic effects at combat start
+  if (playerRelics.some(r => r.effect === 'combat_energy')) startMaxEnergy += 1
+  if (playerRelics.some(r => r.effect === 'first_turn_energy')) startEnergy += 1
+  if (playerRelics.some(r => r.effect === 'combat_block')) startBlock = 5
+  if (playerRelics.some(r => r.effect === 'energy_hp_cost')) startMaxEnergy += 1
+  
+  startEnergy = Math.max(startEnergy, startMaxEnergy)
+  
+  const combatPlayer = { ...state.player, block: startBlock }
+  
+  // Relic: combat_strength
+  if (playerRelics.some(r => r.effect === 'combat_strength')) {
+    combatPlayer.statusEffects = { ...combatPlayer.statusEffects, strength: (combatPlayer.statusEffects.strength || 0) + 1 }
+  }
+  
+  // Relic: combat_poison — apply 1 poison to all enemies
+  if (playerRelics.some(r => r.effect === 'combat_poison')) {
+    enemies.forEach(e => { e.statusEffects.poison = (e.statusEffects.poison || 0) + 1 })
+  }
+  
   const combatState: CombatState = {
-    player: { ...state.player },
+    player: combatPlayer,
     enemies,
     hand: initialHand,
     drawPile,
     discardPile: [],
     activePowers: [],
-    energy: 3,
-    maxEnergy: 3,
+    energy: startEnergy,
+    maxEnergy: startMaxEnergy,
     turn: 1,
     isPlayerTurn: true,
     combatEnded: false,

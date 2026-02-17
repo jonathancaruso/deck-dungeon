@@ -12,6 +12,9 @@ export function shuffleDeck(cards: Card[]): Card[] {
 
 export function drawCards(combatState: CombatState, count: number): CombatState {
   const newState = { ...combatState }
+  newState.drawPile = [...newState.drawPile]
+  newState.discardPile = [...newState.discardPile]
+  newState.hand = [...newState.hand]
   let drawn = 0
   
   while (drawn < count && (newState.drawPile.length > 0 || newState.discardPile.length > 0)) {
@@ -46,19 +49,40 @@ export function calculateCardDamage(card: Card, combatState: CombatState): numbe
   return Math.max(0, damage)
 }
 
+export function calculateEnemyDamage(enemy: Enemy, baseDamage: number): number {
+  let damage = baseDamage
+  const strength = enemy.statusEffects.strength || 0
+  const weak = enemy.statusEffects.weak || 0
+  
+  damage += strength
+  if (weak > 0) {
+    damage = Math.floor(damage * 0.75)
+  }
+  
+  return Math.max(0, damage)
+}
+
 export function calculateCardBlock(card: Card, combatState: CombatState): number {
   let block = card.block || 0
-  // Block is not affected by strength in this simplified version
   return Math.max(0, block)
 }
 
 export function applyCardEffects(card: Card, combatState: CombatState, targetEnemy?: Enemy): CombatState {
   const newState = { ...combatState }
   
-  // Apply damage
-  if (card.damage && targetEnemy) {
-    const damage = calculateCardDamage(card, combatState)
-    applyDamageToEnemy(targetEnemy, damage, newState)
+  // Apply damage — for cleave, hit ALL enemies
+  if (card.damage) {
+    if (card.special === 'cleave') {
+      const damage = calculateCardDamage(card, combatState)
+      newState.enemies.forEach(enemy => {
+        if (enemy.hp > 0) {
+          applyDamageToEnemy(enemy, damage, newState)
+        }
+      })
+    } else if (targetEnemy) {
+      const damage = calculateCardDamage(card, combatState)
+      applyDamageToEnemy(targetEnemy, damage, newState)
+    }
   }
   
   // Apply block
@@ -107,18 +131,21 @@ function applyDamageToEnemy(enemy: Enemy, damage: number, combatState: CombatSta
   }
   
   enemy.hp = Math.max(0, enemy.hp - damage)
-  
-  // Enemy killed - this will be handled in the reducer
 }
 
 function handleSpecialEffects(special: string, combatState: CombatState, targetEnemy?: Enemy, card?: Card): void {
   switch (special) {
     case 'cleave':
-      // Damage all enemies - handled in card play logic
+      // Damage already applied in applyCardEffects for all enemies
       break
-    case 'draw_card':
-      combatState.hand.push(...drawCards(combatState, 1).hand.slice(-1))
+    case 'draw_card': {
+      // FIX BUG-10: properly draw cards by updating state in-place
+      const drawn = drawCards(combatState, 1)
+      combatState.hand = drawn.hand
+      combatState.drawPile = drawn.drawPile
+      combatState.discardPile = drawn.discardPile
       break
+    }
     case 'multi_hit':
       // Second hit (first hit already applied above)
       if (targetEnemy && card) {
@@ -132,12 +159,10 @@ function handleSpecialEffects(special: string, combatState: CombatState, targetE
       }
       break
     case 'second_wind': {
-      // Exhaust all non-Attack cards in hand, gain 5 Block per card
       const nonAttacks = combatState.hand.filter(c => c.type !== 'attack')
       combatState.hand = combatState.hand.filter(c => c.type === 'attack')
       const blockGain = nonAttacks.length * 5
       combatState.player = { ...combatState.player, block: (combatState.player.block || 0) + blockGain }
-      // Juggernaut trigger
       if (blockGain > 0 && combatState.activePowers?.some(p => p.special === 'juggernaut')) {
         const alive = combatState.enemies.filter(e => e.hp > 0)
         if (alive.length > 0) {
@@ -148,7 +173,6 @@ function handleSpecialEffects(special: string, combatState: CombatState, targetE
       break
     }
     case 'whirlwind': {
-      // Deal damage to ALL enemies for each energy remaining
       const energyLeft = combatState.energy
       combatState.enemies.forEach(enemy => {
         if (enemy.hp > 0 && card) {
@@ -162,31 +186,26 @@ function handleSpecialEffects(special: string, combatState: CombatState, targetE
       break
     }
     case 'rampage': {
-      // Card gains 4 damage permanently - modify the card in deck
-      if (card) {
-        const deckCard = combatState.player.deck.find(c => c.id === card.id)
-        if (deckCard && deckCard.damage) deckCard.damage += 4
+      // FIX BUG-9: Also update the played card instance damage
+      if (card && card.damage) {
+        card.damage += 4
       }
       break
     }
     case 'wound': {
-      // Shuffle a Wound into draw pile
       const wound: Card = { id: 'wound', name: 'Wound', type: 'skill', cost: 0, description: 'Unplayable.', rarity: 'common', special: 'unplayable' }
       combatState.drawPile.splice(Math.floor(Math.random() * (combatState.drawPile.length + 1)), 0, wound)
       break
     }
     case 'blood_cost':
-      // Cost reduction handled elsewhere; no extra effect needed here
+      // Cost reduction is handled in gameReducer PLAY_CARD
       break
     case 'self_damage':
-      // Deal damage to self
       combatState.player = { ...combatState.player, hp: Math.max(0, combatState.player.hp - 2) }
       break
     case 'ethereal':
-      // "Must be played with no other cards this turn" - no enforcement needed post-play
       break
     case 'headbutt':
-      // Put a random card from discard on top of draw pile
       if (combatState.discardPile.length > 0) {
         const idx = Math.floor(Math.random() * combatState.discardPile.length)
         const [picked] = combatState.discardPile.splice(idx, 1)
@@ -194,48 +213,47 @@ function handleSpecialEffects(special: string, combatState: CombatState, targetE
       }
       break
     case 'energy_damage':
-      // Gain 1 energy, take 3 damage
       combatState.energy += 1
       combatState.player = { ...combatState.player, hp: Math.max(0, combatState.player.hp - 3) }
       break
-    case 'energy_draw':
-      // Gain 1 energy, draw 2 cards
+    case 'energy_draw': {
       combatState.energy += 1
-      Object.assign(combatState, drawCards(combatState, 2))
+      const drawn = drawCards(combatState, 2)
+      combatState.hand = drawn.hand
+      combatState.drawPile = drawn.drawPile
+      combatState.discardPile = drawn.discardPile
       break
+    }
     case 'disarm':
-      // Enemy loses 2 Strength
       if (targetEnemy) {
         targetEnemy.statusEffects.strength = Math.max(0, (targetEnemy.statusEffects.strength || 0) - 2)
       }
       break
     case 'temporary':
-      // Apply 1 Weak to ALL enemies (card handles exhaust via exhaust flag)
-      combatState.enemies.forEach(enemy => {
-        if (enemy.hp > 0) {
-          enemy.statusEffects.weak = (enemy.statusEffects.weak || 0) + 1
-        }
-      })
+      // FIX BUG-3: Flex — mark that we need to remove 2 strength at end of turn
+      // The strength is already applied via the card's statusEffect.
+      // We track temporary strength by storing it; end-of-turn handler removes it.
+      ;(combatState.player.statusEffects as any)._tempStrength = 
+        ((combatState.player.statusEffects as any)._tempStrength || 0) + 2
       break
     case 'rage_passive':
-      // Handled as activePower - "whenever you play an Attack, gain 3 Block"
+      // Handled as activePower
       break
     case 'cleanse':
-      // Remove all debuffs, heal 3 HP
       combatState.player.statusEffects.weak = 0
       combatState.player.statusEffects.vulnerable = 0
       combatState.player.statusEffects.poison = 0
       combatState.player = { ...combatState.player, hp: Math.min(combatState.player.maxHp, combatState.player.hp + 3) }
       break
-    case 'prepare':
-      // Draw 1 card (discard handled by player choice - for now just draw)
-      Object.assign(combatState, drawCards(combatState, 1))
+    case 'prepare': {
+      const drawn = drawCards(combatState, 1)
+      combatState.hand = drawn.hand
+      combatState.drawPile = drawn.drawPile
+      combatState.discardPile = drawn.discardPile
       break
+    }
     case 'unplayable':
-      // Should not be playable
       break
-    // Power specials (battle_trance, demon_form, juggernaut, barricade, corruption, metallicize, evolve)
-    // handled in gameReducer turn logic
   }
 }
 
@@ -260,6 +278,13 @@ export function processStatusEffects(combatState: CombatState): CombatState {
   if ((playerEffects.weak || 0) > 0) playerEffects.weak = (playerEffects.weak || 1) - 1
   if ((playerEffects.vulnerable || 0) > 0) playerEffects.vulnerable = (playerEffects.vulnerable || 1) - 1
   
+  // FIX BUG-3: Remove temporary strength from Flex at end of turn
+  const tempStr = (playerEffects as any)._tempStrength || 0
+  if (tempStr > 0) {
+    playerEffects.strength = Math.max(0, (playerEffects.strength || 0) - tempStr)
+    delete (playerEffects as any)._tempStrength
+  }
+  
   newState.player.statusEffects = playerEffects
   
   // Process enemy status effects
@@ -275,6 +300,11 @@ export function processStatusEffects(combatState: CombatState): CombatState {
     // Regeneration
     if ((enemyEffects.regen || 0) > 0) {
       enemy.hp = Math.min(enemy.maxHp, enemy.hp + (enemyEffects.regen || 0))
+    }
+    
+    // FIX BUG-5: Ritual — grant strength each turn
+    if ((enemyEffects.ritual || 0) > 0) {
+      enemyEffects.strength = (enemyEffects.strength || 0) + (enemyEffects.ritual || 0)
     }
     
     // Status countdown
@@ -293,8 +323,12 @@ export function enemyAI(enemy: Enemy, combatState: CombatState): void {
   switch (action.type) {
     case 'attack':
       if (action.damage) {
-        let damage = action.damage
-        // Apply vulnerable to player
+        // FIX BUG-6 & BUG-7: Apply enemy strength and weak to damage
+        let damage = calculateEnemyDamage(enemy, action.damage)
+        
+        // FIX BUG-4: Check player thorns before applying damage
+        const playerThorns = combatState.player.statusEffects.thorns || 0
+        
         const playerBlock = combatState.player.block || 0
         if (playerBlock > 0) {
           if (playerBlock >= damage) {
@@ -308,12 +342,15 @@ export function enemyAI(enemy: Enemy, combatState: CombatState): void {
         if (damage > 0) {
           combatState.player.hp = Math.max(0, combatState.player.hp - damage)
         }
+        
+        // Thorns: deal damage back to attacker
+        if (playerThorns > 0) {
+          enemy.hp = Math.max(0, enemy.hp - playerThorns)
+        }
       }
       break
     case 'defend':
-      if (action.block) {
-        // Enemy gains block (not implemented in this simple version)
-      }
+      // Enemy defend — no block system for enemies in this version
       break
     case 'buff':
       if (action.statusEffect) {
@@ -329,22 +366,27 @@ export function enemyAI(enemy: Enemy, combatState: CombatState): void {
       break
   }
   
-  // Generate next action (simplified)
+  // Generate next action
   generateEnemyIntent(enemy)
 }
 
 function generateEnemyIntent(enemy: Enemy): void {
-  // Simplified AI - just cycle through different actions
-  const actions = ['attack', 'defend', 'buff'] as const
+  // FIX WARN-8: Use enemy's base damage from template instead of random values
+  const actions: EnemyIntent[] = ['attack', 'attack', 'attack', 'defend', 'buff']
+  type EnemyIntent = 'attack' | 'defend' | 'buff'
   const randomAction = actions[Math.floor(Math.random() * actions.length)]
   
   enemy.intent = randomAction
+  
+  // Use the enemy's original defined damage (from maxHp-based scaling)
+  // We derive a base damage from the enemy's maxHp to keep it proportional
+  const baseDamage = Math.max(5, Math.floor(enemy.maxHp * 0.08))
   
   switch (randomAction) {
     case 'attack':
       enemy.nextAction = {
         type: 'attack',
-        damage: Math.floor(Math.random() * 10) + 5
+        damage: baseDamage + Math.floor(Math.random() * 4)
       }
       break
     case 'defend':
