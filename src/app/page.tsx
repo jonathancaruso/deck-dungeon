@@ -1,6 +1,6 @@
 'use client'
 
-import { useReducer, useEffect } from 'react'
+import { useReducer, useEffect, useRef } from 'react'
 import { gameReducer, initialGameState } from '../game/utils/gameReducer'
 import MainMenu from '../components/MainMenu'
 import MapScreen from '../components/MapScreen'
@@ -11,15 +11,42 @@ import GameOverScreen from '../components/GameOverScreen'
 import VictoryScreen from '../components/VictoryScreen'
 import ShopScreen from '../components/ShopScreen'
 import EventScreen from '../components/EventScreen'
+import { SoundProvider, useSoundContext } from '../hooks/SoundContext'
 
 export default function Home() {
+  return (
+    <SoundProvider>
+      <GameInner />
+    </SoundProvider>
+  )
+}
+
+function GameInner() {
   const [gameState, dispatch] = useReducer(gameReducer, initialGameState)
+  const { play, muted, toggle } = useSoundContext()
+  const prevPhase = useRef(gameState.gamePhase)
 
   useEffect(() => {
     if (gameState.gamePhase !== 'menu') {
       dispatch({ type: 'SAVE_GAME' })
     }
   }, [gameState])
+
+  // Sound effects on phase changes
+  useEffect(() => {
+    const prev = prevPhase.current
+    const curr = gameState.gamePhase
+    prevPhase.current = curr
+    if (prev === curr) return
+
+    if (curr === 'combat') play('boss_appear')
+    else if (curr === 'game_over') play('defeat')
+    else if (curr === 'victory') play('victory')
+    else if (curr === 'card_reward') play('gold_gain')
+    else if (curr === 'shop') play('button_click')
+    else if (curr === 'rest') play('button_click')
+    else if (curr === 'event') play('button_click')
+  }, [gameState.gamePhase, play])
 
   // Clear save on game over or victory
   useEffect(() => {
@@ -49,7 +76,16 @@ export default function Home() {
           backdropFilter: 'blur(12px)',
         }}>
           <div className="max-w-6xl mx-auto flex items-center justify-between gap-3 flex-wrap">
-            <div className="text-lg font-black text-purple-400 tracking-tight">⚔️ Deck Dungeon</div>
+            <div className="flex items-center gap-2">
+              <div className="text-lg font-black text-purple-400 tracking-tight">⚔️ Deck Dungeon</div>
+              <button
+                onClick={toggle}
+                className="text-lg opacity-60 hover:opacity-100 transition-opacity"
+                title={muted ? 'Unmute' : 'Mute'}
+              >
+                {muted ? '🔇' : '🔊'}
+              </button>
+            </div>
             
             <div className="flex items-center gap-2 flex-wrap">
               <div className="hud-bar">

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Player } from '../game/types'
 import CardComponent from './CardComponent'
+import { useSoundContext } from '../hooks/SoundContext'
 
 interface RestScreenProps {
   player: Player
@@ -10,6 +11,7 @@ interface RestScreenProps {
 }
 
 export default function RestScreen({ player, onRestHeal, onRestUpgrade, onRestRemove }: RestScreenProps) {
+  const { play } = useSoundContext()
   const [mode, setMode] = useState<'choose' | 'upgrade' | 'remove'>('choose')
   
   const healAmount = Math.floor(player.maxHp * 0.3)
@@ -27,7 +29,7 @@ export default function RestScreen({ player, onRestHeal, onRestUpgrade, onRestRe
         </div>
         <div className="flex flex-wrap justify-center gap-3 mb-6 max-w-4xl">
           {upgradableCards.map((card, index) => (
-            <CardComponent key={`${card.id}-${index}`} card={card} onClick={() => onRestUpgrade(card.id)} />
+            <CardComponent key={`${card.id}-${index}`} card={card} onClick={() => { play('level_up'); onRestUpgrade(card.id) }} />
           ))}
         </div>
         <button onClick={() => setMode('choose')} className="game-button-secondary">Back</button>
@@ -63,7 +65,7 @@ export default function RestScreen({ player, onRestHeal, onRestUpgrade, onRestRe
       
       <div className="panel p-5 max-w-lg w-full space-y-3">
         {/* Heal */}
-        <div className="rest-option" onClick={canHeal ? () => onRestHeal() : undefined}
+        <div className="rest-option" onClick={canHeal ? () => { play('heal'); onRestHeal() } : undefined}
           style={{ opacity: canHeal ? 1 : 0.4 }}>
           <div className="flex items-center gap-4">
             <div className="text-3xl">❤️</div>

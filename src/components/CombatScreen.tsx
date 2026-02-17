@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { CombatState, Card, Enemy, StatusEffect } from '../game/types'
 import CardComponent from './CardComponent'
 import EnemyComponent from './EnemyComponent'
+import { useSoundContext } from '../hooks/SoundContext'
 
 interface DamagePopup {
   id: number
@@ -25,6 +26,7 @@ interface CombatScreenProps {
 }
 
 export default function CombatScreen({ combatState, onPlayCard, onEndTurn, onCombatEnd }: CombatScreenProps) {
+  const { play } = useSoundContext()
   const [selectedCard, setSelectedCard] = useState<Card | null>(null)
   const [screenShake, setScreenShake] = useState(false)
   const [hitEnemies, setHitEnemies] = useState<Set<string>>(new Set())
@@ -47,6 +49,7 @@ export default function CombatScreen({ combatState, onPlayCard, onEndTurn, onCom
   
   useEffect(() => {
     if (combatState.combatEnded && combatState.victory) {
+      play('victory')
       const timer = setTimeout(() => onCombatEnd(), 2000)
       return () => clearTimeout(timer)
     }
@@ -64,6 +67,7 @@ export default function CombatScreen({ combatState, onPlayCard, onEndTurn, onCom
         const dmg = prevHp - enemy.hp
         newPopups.push({ id: popupCounter.current++, enemyId: enemy.id, amount: dmg, type: 'damage' })
         newSlashes.push({ id: slashCounter.current++, enemyId: enemy.id, variant: Math.floor(Math.random() * 3) })
+        play('enemy_hit')
         setHitEnemies(prev => new Set(prev).add(enemy.id))
         setTimeout(() => setHitEnemies(prev => { const s = new Set(prev); s.delete(enemy.id); return s }), 400)
       }
@@ -79,12 +83,14 @@ export default function CombatScreen({ combatState, onPlayCard, onEndTurn, onCom
     if (prevPlayerHp.current > combatState.player.hp) {
       const dmg = prevPlayerHp.current - combatState.player.hp
       newPopups.push({ id: popupCounter.current++, isPlayer: true, amount: dmg, type: 'damage' })
+      play('player_hit')
       setPlayerHit(true)
       setScreenShake(true)
       setTimeout(() => { setPlayerHit(false); setScreenShake(false) }, 500)
     } else if (prevPlayerHp.current < combatState.player.hp) {
       const heal = combatState.player.hp - prevPlayerHp.current
       newPopups.push({ id: popupCounter.current++, isPlayer: true, amount: heal, type: 'heal' })
+      play('heal')
     }
     prevPlayerHp.current = combatState.player.hp
     
@@ -114,6 +120,7 @@ export default function CombatScreen({ combatState, onPlayCard, onEndTurn, onCom
     }
     if (combatState.isPlayerTurn !== prevIsPlayerTurn.current) {
       setShowTurnBanner(combatState.isPlayerTurn ? 'player' : 'enemy')
+      play(combatState.isPlayerTurn ? 'turn_start' : 'enemy_turn')
       setTimeout(() => setShowTurnBanner(null), 1200)
       if (combatState.isPlayerTurn) {
         setTurnAnimating(true)
@@ -127,6 +134,7 @@ export default function CombatScreen({ combatState, onPlayCard, onEndTurn, onCom
   useEffect(() => {
     const currentBlock = combatState.player.block || 0
     if (currentBlock > prevPlayerBlock.current && currentBlock > 0) {
+      play('block_gain')
       setShieldFlash(true)
       setBlockGained(true)
       const blockAmt = currentBlock - prevPlayerBlock.current
@@ -149,8 +157,10 @@ export default function CombatScreen({ combatState, onPlayCard, onEndTurn, onCom
     if (card.type === 'attack') {
       setSelectedCard(selectedCard === card ? null : card)
       setSelectedCardIndex(selectedCard === card ? null : index)
+      play('card_play')
     } else {
       // Play card with animation
+      play(card.type === 'power' ? 'card_power' : 'card_skill')
       setPlayingCardIndex(index)
       setTimeout(() => {
         onPlayCard(card.id)
@@ -165,6 +175,7 @@ export default function CombatScreen({ combatState, onPlayCard, onEndTurn, onCom
     if (!selectedCard || combatState.combatEnded || !combatState.isPlayerTurn) return
     if (enemy.hp <= 0) return
     // Play card with animation
+    play('card_attack')
     setPlayingCardIndex(selectedCardIndex)
     const cardId = selectedCard.id
     setTimeout(() => {

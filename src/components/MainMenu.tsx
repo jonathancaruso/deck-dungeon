@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { GameState } from '../game/types'
+import { useSoundContext } from '../hooks/SoundContext'
 
 interface MainMenuProps {
   onStartGame: () => void
@@ -7,6 +8,7 @@ interface MainMenuProps {
 }
 
 export default function MainMenu({ onStartGame, onContinueGame }: MainMenuProps) {
+  const { muted, toggle, play } = useSoundContext()
   const [hasSave, setHasSave] = useState(false)
   const [saveInfo, setSaveInfo] = useState<{ act: number; floor: number; hp: number; maxHp: number } | null>(null)
 
@@ -57,6 +59,7 @@ export default function MainMenu({ onStartGame, onContinueGame }: MainMenuProps)
       <button 
         onClick={() => {
           localStorage.removeItem('deck-dungeon-save')
+          play('button_click')
           onStartGame()
         }}
         className={`game-button text-xl px-10 py-5 mb-8 bg-gradient-to-b from-purple-600 to-purple-800 border-purple-400/50 hover:shadow-xl hover:shadow-purple-500/20 ${hasSave ? 'opacity-80' : ''}`}
@@ -64,6 +67,13 @@ export default function MainMenu({ onStartGame, onContinueGame }: MainMenuProps)
         ⚡ {hasSave ? 'New Run' : 'Start New Run'}
       </button>
       
+      <button
+        onClick={toggle}
+        className="mb-6 text-sm text-gray-400 hover:text-gray-200 transition-colors"
+      >
+        {muted ? '🔇 Sound Off' : '🔊 Sound On'}
+      </button>
+
       <div className="grid grid-cols-2 gap-3 text-sm text-gray-500 max-w-sm">
         <div className="panel p-3 text-center">
           <div className="text-2xl mb-1">🗺️</div>

@@ -3,6 +3,7 @@ import { Player, Card, Potion } from '../game/types'
 import { CARDS } from '../game/data/cards'
 import { POTIONS, POTION_POOLS } from '../game/data/potions'
 import CardComponent from './CardComponent'
+import { useSoundContext } from '../hooks/SoundContext'
 
 interface ShopScreenProps {
   player: Player
@@ -27,6 +28,7 @@ function getPotionPrice(): number {
 }
 
 export default function ShopScreen({ player, act, onBuyCard, onBuyPotion, onRemoveCard, onHeal, onLeave }: ShopScreenProps) {
+  const { play } = useSoundContext()
   const [removingCard, setRemovingCard] = useState(false)
   
   const shopCards = useMemo(() => {
@@ -53,6 +55,7 @@ export default function ShopScreen({ player, act, onBuyCard, onBuyPotion, onRemo
     const price = getCardPrice(card)
     if (player.gold < price || boughtCards.has(card.id)) return
     onBuyCard(card)
+    play('shop_buy')
     setBoughtCards(prev => new Set(prev).add(card.id))
   }
   
@@ -60,12 +63,14 @@ export default function ShopScreen({ player, act, onBuyCard, onBuyPotion, onRemo
     if (player.gold < getPotionPrice() || boughtPotions.has(potion.id)) return
     if (player.potions.length >= 3) return
     onBuyPotion(potion)
+    play('shop_buy')
     setBoughtPotions(prev => new Set(prev).add(potion.id))
   }
   
   const handleRemoveCard = (cardId: string) => {
     if (player.gold < removeCost || removedCard) return
     onRemoveCard(cardId)
+    play('card_exhaust')
     setRemovedCard(true)
     setRemovingCard(false)
   }
@@ -73,6 +78,7 @@ export default function ShopScreen({ player, act, onBuyCard, onBuyPotion, onRemo
   const handleHeal = () => {
     if (player.gold < healCost || healed || player.hp >= player.maxHp) return
     onHeal(Math.min(15, player.maxHp - player.hp))
+    play('heal')
     setHealed(true)
   }
   
