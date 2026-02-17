@@ -187,23 +187,85 @@ export const RELICS: Record<string, Relic> = {
     description: 'At rest sites, you may remove 2 cards instead of 1.',
     rarity: 'rare',
     effect: 'double_remove'
+  },
+
+  // NEW COMMON RELICS
+  bone_dice: {
+    id: 'bone_dice',
+    name: 'Bone Dice',
+    description: 'At the start of combat, gain 0-2 bonus energy randomly.',
+    rarity: 'common',
+    effect: 'random_start_energy'
+  },
+  worn_boots: {
+    id: 'worn_boots',
+    name: 'Worn Boots',
+    description: 'Gain 5 extra gold after each combat.',
+    rarity: 'common',
+    effect: 'extra_gold_5'
+  },
+
+  // NEW UNCOMMON RELICS
+  shadow_cloak: {
+    id: 'shadow_cloak',
+    name: 'Shadow Cloak',
+    description: 'If you have 0 Block at end of turn, gain 8 Block.',
+    rarity: 'uncommon',
+    effect: 'no_block_shield'
+  },
+  leech_fang: {
+    id: 'leech_fang',
+    name: 'Leech Fang',
+    description: 'Whenever you play an Attack card, heal 1 HP.',
+    rarity: 'uncommon',
+    effect: 'attack_heal'
+  },
+  ember_crown: {
+    id: 'ember_crown',
+    name: 'Ember Crown',
+    description: 'Whenever you play a Power card, gain 1 energy.',
+    rarity: 'uncommon',
+    effect: 'power_energy'
+  },
+  cursed_mirror: {
+    id: 'cursed_mirror',
+    name: 'Cursed Mirror',
+    description: 'Start combat with 2 Vulnerable on yourself but 2 Weak on all enemies.',
+    rarity: 'uncommon',
+    effect: 'curse_trade'
+  },
+
+  // NEW RARE RELICS
+  void_shard: {
+    id: 'void_shard',
+    name: 'Void Shard',
+    description: 'Gain 1 extra energy each turn but draw 1 fewer card.',
+    rarity: 'rare',
+    effect: 'energy_less_draw'
+  },
+  reapers_mark: {
+    id: 'reapers_mark',
+    name: "Reaper's Mark",
+    description: 'When you kill an enemy, gain 2 Strength for the rest of combat.',
+    rarity: 'rare',
+    effect: 'kill_strength'
   }
 }
 
 export const RELIC_POOLS = {
   1: {
-    common: ['iron_ring', 'red_candle', 'rusty_shield', 'gold_tooth', 'venom_vial', 'blood_vial', 'lucky_coin', 'energy_crystal'],
-    uncommon: ['strength_amulet', 'healing_potion', 'thorns_ring', 'draw_ring', 'meditation_stone', 'rage_crystal', 'poison_ring', 'card_mastery'],
-    rare: ['demon_heart', 'phoenix_feather', 'time_crystal', 'vampiric_fangs', 'ancient_tome', 'chaos_orb', 'eternal_flame', 'mirror_shield', 'soul_gem', 'deck_master']
+    common: ['iron_ring', 'red_candle', 'rusty_shield', 'gold_tooth', 'venom_vial', 'blood_vial', 'lucky_coin', 'energy_crystal', 'bone_dice', 'worn_boots'],
+    uncommon: ['strength_amulet', 'healing_potion', 'thorns_ring', 'draw_ring', 'meditation_stone', 'rage_crystal', 'poison_ring', 'card_mastery', 'shadow_cloak', 'leech_fang', 'ember_crown', 'cursed_mirror'],
+    rare: ['demon_heart', 'phoenix_feather', 'time_crystal', 'vampiric_fangs', 'ancient_tome', 'chaos_orb', 'eternal_flame', 'mirror_shield', 'soul_gem', 'deck_master', 'void_shard', 'reapers_mark']
   },
   2: {
-    common: ['iron_ring', 'red_candle', 'rusty_shield', 'gold_tooth', 'venom_vial', 'blood_vial', 'lucky_coin', 'energy_crystal'],
-    uncommon: ['strength_amulet', 'healing_potion', 'thorns_ring', 'draw_ring', 'meditation_stone', 'rage_crystal', 'poison_ring', 'card_mastery'],
-    rare: ['demon_heart', 'phoenix_feather', 'time_crystal', 'vampiric_fangs', 'ancient_tome', 'chaos_orb', 'eternal_flame', 'mirror_shield', 'soul_gem', 'deck_master']
+    common: ['iron_ring', 'red_candle', 'rusty_shield', 'gold_tooth', 'venom_vial', 'blood_vial', 'lucky_coin', 'energy_crystal', 'bone_dice', 'worn_boots'],
+    uncommon: ['strength_amulet', 'healing_potion', 'thorns_ring', 'draw_ring', 'meditation_stone', 'rage_crystal', 'poison_ring', 'card_mastery', 'shadow_cloak', 'leech_fang', 'ember_crown', 'cursed_mirror'],
+    rare: ['demon_heart', 'phoenix_feather', 'time_crystal', 'vampiric_fangs', 'ancient_tome', 'chaos_orb', 'eternal_flame', 'mirror_shield', 'soul_gem', 'deck_master', 'void_shard', 'reapers_mark']
   },
   3: {
-    common: ['iron_ring', 'red_candle', 'rusty_shield', 'gold_tooth', 'venom_vial', 'blood_vial', 'lucky_coin', 'energy_crystal'],
-    uncommon: ['strength_amulet', 'healing_potion', 'thorns_ring', 'draw_ring', 'meditation_stone', 'rage_crystal', 'poison_ring', 'card_mastery'],
-    rare: ['demon_heart', 'phoenix_feather', 'time_crystal', 'vampiric_fangs', 'ancient_tome', 'chaos_orb', 'eternal_flame', 'mirror_shield', 'soul_gem', 'deck_master']
+    common: ['iron_ring', 'red_candle', 'rusty_shield', 'gold_tooth', 'venom_vial', 'blood_vial', 'lucky_coin', 'energy_crystal', 'bone_dice', 'worn_boots'],
+    uncommon: ['strength_amulet', 'healing_potion', 'thorns_ring', 'draw_ring', 'meditation_stone', 'rage_crystal', 'poison_ring', 'card_mastery', 'shadow_cloak', 'leech_fang', 'ember_crown', 'cursed_mirror'],
+    rare: ['demon_heart', 'phoenix_feather', 'time_crystal', 'vampiric_fangs', 'ancient_tome', 'chaos_orb', 'eternal_flame', 'mirror_shield', 'soul_gem', 'deck_master', 'void_shard', 'reapers_mark']
   }
 }

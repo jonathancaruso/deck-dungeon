@@ -162,6 +162,16 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         updatedCombatState.player = { ...updatedCombatState.player, block: (updatedCombatState.player.block || 0) + 3 }
       }
       
+      // Relic: leech_fang — heal 1 HP when playing an Attack
+      if (card.type === 'attack' && state.player.relics.some(r => r.effect === 'attack_heal')) {
+        updatedCombatState.player = { ...updatedCombatState.player, hp: Math.min(state.player.maxHp, updatedCombatState.player.hp + 1) }
+      }
+      
+      // Relic: ember_crown — gain 1 energy when playing a Power
+      if (card.type === 'power' && state.player.relics.some(r => r.effect === 'power_energy')) {
+        updatedCombatState.energy += 1
+      }
+      
       // Move card to appropriate pile
       if (card.type === 'power') {
         // Power cards stay active for the rest of combat
@@ -174,14 +184,19 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       
       // Update run stats will be handled in main game state
       
-      // Check for combat end
+      // Relic: kill_strength — gain 2 Strength when killing an enemy
+      const enemiesBefore = state.combatState.enemies.filter(e => e.hp > 0).length
       const aliveEnemies = updatedCombatState.enemies.filter(e => e.hp > 0)
+      const enemiesKilledNow = enemiesBefore - aliveEnemies.length
+      if (enemiesKilledNow > 0 && state.player.relics.some(r => r.effect === 'kill_strength')) {
+        updatedCombatState.player.statusEffects = { ...updatedCombatState.player.statusEffects }
+        updatedCombatState.player.statusEffects.strength = (updatedCombatState.player.statusEffects.strength || 0) + (2 * enemiesKilledNow)
+      }
+      
+      // Check for combat end
       if (aliveEnemies.length === 0) {
         updatedCombatState.combatEnded = true
         updatedCombatState.victory = true
-        
-        // Transition to card reward phase after a brief delay
-        // Will transition to card reward screen
       }
       
       // Update run stats
@@ -215,6 +230,11 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
             target.hp = Math.max(0, target.hp - 5)
           }
         }
+      }
+      
+      // Relic: shadow_cloak — if 0 block at end of turn, gain 8 block
+      if (state.player.relics.some(r => r.effect === 'no_block_shield') && newCombatState.player.block === 0) {
+        newCombatState.player = { ...newCombatState.player, block: 8 }
       }
       
       // Discard hand
@@ -265,13 +285,20 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         newCombatState.player.hp = Math.max(1, newCombatState.player.hp - 1)
       }
       
+      // Relic: void_shard — +1 energy, -1 draw
+      if (state.player.relics.some(r => r.effect === 'energy_less_draw')) {
+        newCombatState.energy += 1
+      }
+      
       // Battle Trance: draw 1 extra card
       const hasBattleTrance = newCombatState.activePowers.some(p => p.special === 'battle_trance')
       // Relic: draw_ring — draw 1 extra card
       const hasDrawRing = state.player.relics.some(r => r.effect === 'extra_draw')
+      const hasVoidShard = state.player.relics.some(r => r.effect === 'energy_less_draw')
       let drawCount = 5
       if (hasBattleTrance) drawCount += 1
       if (hasDrawRing) drawCount += 1
+      if (hasVoidShard) drawCount -= 1
       newCombatState = drawCards(newCombatState, drawCount)
       
       return {
@@ -306,6 +333,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       }
       if (newState.player.relics.some(r => r.effect === 'heal_after_combat')) {
         newState.player = { ...newState.player, hp: Math.min(newState.player.maxHp, newState.player.hp + 2) }
+      }
+      if (newState.player.relics.some(r => r.effect === 'extra_gold_5')) {
+        newState.player = { ...newState.player, gold: newState.player.gold + 5 }
       }
       
       // Update map availability
@@ -631,6 +661,18 @@ function startCombat(state: GameState, enemyIds: string[]): GameState {
   // Relic: combat_poison — apply 1 poison to all enemies
   if (playerRelics.some(r => r.effect === 'combat_poison')) {
     enemies.forEach(e => { e.statusEffects.poison = (e.statusEffects.poison || 0) + 1 })
+  }
+  
+  // Relic: random_start_energy — gain 0-2 bonus energy
+  if (playerRelics.some(r => r.effect === 'random_start_energy')) {
+    const bonus = Math.floor(Math.random() * 3)
+    startEnergy += bonus
+  }
+  
+  // Relic: curse_trade — 2 Vulnerable on self, 2 Weak on all enemies
+  if (playerRelics.some(r => r.effect === 'curse_trade')) {
+    combatPlayer.statusEffects = { ...combatPlayer.statusEffects, vulnerable: (combatPlayer.statusEffects.vulnerable || 0) + 2 }
+    enemies.forEach(e => { e.statusEffects.weak = (e.statusEffects.weak || 0) + 2 })
   }
   
   const combatState: CombatState = {
