@@ -78,7 +78,7 @@ export default function EnemyComponent({ enemy, isTargetable = false, isHit = fa
     <div
       className={`enemy ${isTargetable ? 'enemy-targetable' : ''} ${
         isDead ? 'enemy-dying' : ''
-      } ${isHit ? 'enemy-hit' : ''} w-44 sm:w-52 min-h-[200px] animate-fade-in-up`}
+      } ${isHit ? 'enemy-hit' : ''} w-44 sm:w-52 min-h-[200px]`}
       onClick={isTargetable && !isDead ? onClick : undefined}
     >
       {/* Enemy Avatar + Name */}

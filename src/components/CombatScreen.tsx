@@ -244,7 +244,7 @@ export default function CombatScreen({ combatState, onPlayCard, onEndTurn, onCom
       <div className="flex-1 mb-4 flex items-start justify-center">
         <div className="flex flex-wrap justify-center gap-4">
           {combatState.enemies.map(enemy => (
-            <div key={enemy.id} className="relative">
+            <div key={enemy.id} className="relative animate-fade-in-up">
               <EnemyComponent
                 enemy={enemy}
                 isTargetable={selectedCard?.type === 'attack' && enemy.hp > 0}
