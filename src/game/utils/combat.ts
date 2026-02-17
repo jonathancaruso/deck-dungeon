@@ -65,6 +65,15 @@ export function applyCardEffects(card: Card, combatState: CombatState, targetEne
   if (card.block) {
     const block = calculateCardBlock(card, combatState)
     newState.player = { ...newState.player, block: (newState.player.block || 0) + block }
+    
+    // Juggernaut: deal 5 damage to a random enemy when gaining block
+    if (newState.activePowers?.some(p => p.special === 'juggernaut')) {
+      const aliveEnemies = newState.enemies.filter(e => e.hp > 0)
+      if (aliveEnemies.length > 0) {
+        const target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)]
+        applyDamageToEnemy(target, 5, newState)
+      }
+    }
   }
   
   // Apply status effects

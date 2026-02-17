@@ -104,6 +104,7 @@ export interface CombatState {
   hand: Card[]
   drawPile: Card[]
   discardPile: Card[]
+  activePowers: Card[]
   energy: number
   maxEnergy: number
   turn: number

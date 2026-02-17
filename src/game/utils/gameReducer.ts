@@ -116,7 +116,12 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       if (!state.combatState || state.gamePhase !== 'combat') return state
       
       const card = state.combatState.hand.find(c => c.id === action.cardId)
-      if (!card || state.combatState.energy < card.cost) return state
+      if (!card) return state
+      
+      // Corruption: skills cost 0
+      const hasCorruption = state.combatState.activePowers.some(p => p.special === 'corruption')
+      const effectiveCost = (hasCorruption && card.type === 'skill') ? 0 : card.cost
+      if (state.combatState.energy < effectiveCost) return state
       
       let targetEnemy: Enemy | undefined
       if (card.type === 'attack' && action.targetEnemyId) {
@@ -130,14 +135,17 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       newCombatState.hand = newCombatState.hand.filter(c => c !== card)
       
       // Pay energy cost
-      newCombatState.energy -= card.cost
+      newCombatState.energy -= effectiveCost
       
       // Apply card effects
       const updatedCombatState = applyCardEffects(card, newCombatState, targetEnemy)
       
-      // Move card to discard pile (unless it exhausts)
-      if (card.exhaust) {
-        // Card is exhausted and removed from game
+      // Move card to appropriate pile
+      if (card.type === 'power') {
+        // Power cards stay active for the rest of combat
+        updatedCombatState.activePowers.push(card)
+      } else if (card.exhaust || (hasCorruption && card.type === 'skill')) {
+        // Exhausted cards are removed from game
       } else {
         updatedCombatState.discardPile.push(card)
       }
@@ -174,6 +182,19 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       
       let newCombatState = { ...state.combatState }
       
+      // End-of-turn powers: Metallicize (+3 block)
+      if (newCombatState.activePowers.some(p => p.special === 'metallicize')) {
+        newCombatState.player = { ...newCombatState.player, block: (newCombatState.player.block || 0) + 3 }
+        // Juggernaut triggers on metallicize block gain too
+        if (newCombatState.activePowers.some(p => p.special === 'juggernaut')) {
+          const aliveEnemies = newCombatState.enemies.filter(e => e.hp > 0)
+          if (aliveEnemies.length > 0) {
+            const target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)]
+            target.hp = Math.max(0, target.hp - 5)
+          }
+        }
+      }
+      
       // Discard hand
       newCombatState.discardPile.push(...newCombatState.hand)
       newCombatState.hand = []
@@ -200,8 +221,21 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       // Start new turn
       newCombatState.turn++
       newCombatState.energy = newCombatState.maxEnergy
-      newCombatState.player = { ...newCombatState.player, block: 0 } // Reset block each turn
-      newCombatState = drawCards(newCombatState, 5)
+      
+      // Barricade: block persists between turns
+      const hasBarricade = newCombatState.activePowers.some(p => p.special === 'barricade')
+      if (!hasBarricade) {
+        newCombatState.player = { ...newCombatState.player, block: 0 }
+      }
+      
+      // Demon Form: gain 2 Strength at start of turn
+      if (newCombatState.activePowers.some(p => p.special === 'demon_form')) {
+        newCombatState.player.statusEffects.strength = (newCombatState.player.statusEffects.strength || 0) + 2
+      }
+      
+      // Battle Trance: draw 1 extra card
+      const hasBattleTrance = newCombatState.activePowers.some(p => p.special === 'battle_trance')
+      newCombatState = drawCards(newCombatState, hasBattleTrance ? 6 : 5)
       
       return {
         ...state,
@@ -463,6 +497,7 @@ function startCombat(state: GameState, enemyIds: string[]): GameState {
     hand: initialHand,
     drawPile,
     discardPile: [],
+    activePowers: [],
     energy: 3,
     maxEnergy: 3,
     turn: 1,
