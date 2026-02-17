@@ -131,7 +131,111 @@ function handleSpecialEffects(special: string, combatState: CombatState, targetE
         combatState.energy += 1
       }
       break
-    // Add more special effects as needed
+    case 'second_wind': {
+      // Exhaust all non-Attack cards in hand, gain 5 Block per card
+      const nonAttacks = combatState.hand.filter(c => c.type !== 'attack')
+      combatState.hand = combatState.hand.filter(c => c.type === 'attack')
+      const blockGain = nonAttacks.length * 5
+      combatState.player = { ...combatState.player, block: (combatState.player.block || 0) + blockGain }
+      // Juggernaut trigger
+      if (blockGain > 0 && combatState.activePowers?.some(p => p.special === 'juggernaut')) {
+        const alive = combatState.enemies.filter(e => e.hp > 0)
+        if (alive.length > 0) {
+          const t = alive[Math.floor(Math.random() * alive.length)]
+          applyDamageToEnemy(t, 5, combatState)
+        }
+      }
+      break
+    }
+    case 'whirlwind': {
+      // Deal damage to ALL enemies for each energy remaining
+      const energyLeft = combatState.energy
+      combatState.enemies.forEach(enemy => {
+        if (enemy.hp > 0 && card) {
+          for (let i = 0; i < energyLeft; i++) {
+            const dmg = calculateCardDamage(card, combatState)
+            applyDamageToEnemy(enemy, dmg, combatState)
+          }
+        }
+      })
+      combatState.energy = 0
+      break
+    }
+    case 'rampage': {
+      // Card gains 4 damage permanently - modify the card in deck
+      if (card) {
+        const deckCard = combatState.player.deck.find(c => c.id === card.id)
+        if (deckCard && deckCard.damage) deckCard.damage += 4
+      }
+      break
+    }
+    case 'wound': {
+      // Shuffle a Wound into draw pile
+      const wound: Card = { id: 'wound', name: 'Wound', type: 'skill', cost: 0, description: 'Unplayable.', rarity: 'common', special: 'unplayable' }
+      combatState.drawPile.splice(Math.floor(Math.random() * (combatState.drawPile.length + 1)), 0, wound)
+      break
+    }
+    case 'blood_cost':
+      // Cost reduction handled elsewhere; no extra effect needed here
+      break
+    case 'self_damage':
+      // Deal damage to self
+      combatState.player = { ...combatState.player, hp: Math.max(0, combatState.player.hp - 2) }
+      break
+    case 'ethereal':
+      // "Must be played with no other cards this turn" - no enforcement needed post-play
+      break
+    case 'headbutt':
+      // Put a random card from discard on top of draw pile
+      if (combatState.discardPile.length > 0) {
+        const idx = Math.floor(Math.random() * combatState.discardPile.length)
+        const [picked] = combatState.discardPile.splice(idx, 1)
+        combatState.drawPile.unshift(picked)
+      }
+      break
+    case 'energy_damage':
+      // Gain 1 energy, take 3 damage
+      combatState.energy += 1
+      combatState.player = { ...combatState.player, hp: Math.max(0, combatState.player.hp - 3) }
+      break
+    case 'energy_draw':
+      // Gain 1 energy, draw 2 cards
+      combatState.energy += 1
+      Object.assign(combatState, drawCards(combatState, 2))
+      break
+    case 'disarm':
+      // Enemy loses 2 Strength
+      if (targetEnemy) {
+        targetEnemy.statusEffects.strength = Math.max(0, (targetEnemy.statusEffects.strength || 0) - 2)
+      }
+      break
+    case 'temporary':
+      // Apply 1 Weak to ALL enemies (card handles exhaust via exhaust flag)
+      combatState.enemies.forEach(enemy => {
+        if (enemy.hp > 0) {
+          enemy.statusEffects.weak = (enemy.statusEffects.weak || 0) + 1
+        }
+      })
+      break
+    case 'rage_passive':
+      // Handled as activePower - "whenever you play an Attack, gain 3 Block"
+      break
+    case 'cleanse':
+      // Remove all debuffs, heal 3 HP
+      combatState.player.statusEffects.weak = 0
+      combatState.player.statusEffects.vulnerable = 0
+      combatState.player.statusEffects.poison = 0
+      combatState.player = { ...combatState.player, hp: Math.min(combatState.player.maxHp, combatState.player.hp + 3) }
+      break
+    case 'prepare':
+      // Draw 1 card (discard handled by player choice - for now just draw)
+      Object.assign(combatState, drawCards(combatState, 1))
+      break
+    case 'unplayable':
+      // Should not be playable
+      break
+    // Power specials (battle_trance, demon_form, juggernaut, barricade, corruption, metallicize, evolve)
+    // handled in gameReducer turn logic
   }
 }
 

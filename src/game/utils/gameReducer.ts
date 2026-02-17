@@ -129,6 +129,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       
       const card = state.combatState.hand.find(c => c.id === action.cardId)
       if (!card) return state
+      if (card.special === 'unplayable') return state
       
       // Corruption: skills cost 0
       const hasCorruption = state.combatState.activePowers.some(p => p.special === 'corruption')
@@ -151,6 +152,11 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       
       // Apply card effects
       const updatedCombatState = applyCardEffects(card, newCombatState, targetEnemy)
+      
+      // Rage: gain 3 Block when playing an Attack
+      if (card.type === 'attack' && updatedCombatState.activePowers.some(p => p.special === 'rage_passive')) {
+        updatedCombatState.player = { ...updatedCombatState.player, block: (updatedCombatState.player.block || 0) + 3 }
+      }
       
       // Move card to appropriate pile
       if (card.type === 'power') {
