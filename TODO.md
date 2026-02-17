@@ -3,7 +3,7 @@
 ## In Progress
 
 ## Backlog
-- [ ] Sound effects / music
+- [x] Sound effects (procedural Web Audio API SFX)
 - [ ] More card variety (Act 2/3 exclusive cards)
 - [ ] Additional relics
 - [ ] More event encounters
@@ -28,3 +28,4 @@
 - [x] Dark fantasy visual overhaul
 - [x] Card frames and combat UI polish
 - [x] Touch target improvements
+- [x] Sound effects (procedural Web Audio API SFX)
