@@ -1,7 +1,6 @@
 # Deck Dungeon - TODO
 
 ## In Progress
-- [ ] Combat animations (CombatScreen, CardComponent, EnemyComponent)
 
 ## Backlog
 - [ ] Sound effects / music
@@ -14,6 +13,7 @@
 - [ ] Daily challenge mode (seeded runs)
 
 ## Done
+- [x] Combat animations (slash VFX, turn banners, card play, energy transitions)
 - [x] Core combat system with status effects
 - [x] 40+ cards (Attack, Skill, Power)
 - [x] 3 acts with bosses

@@ -242,12 +242,6 @@ export default function CombatScreen({ combatState, onPlayCard, onEndTurn, onCom
                   <div key={s.id} className={`slash-effect slash-variant-${s.variant}`} />
                 ))}
               {/* Damage popups */}
-              {/* Slash VFX */}
-              {slashEffects
-                .filter(s => s.enemyId === enemy.id)
-                .map(s => (
-                  <div key={s.id} className={`slash-effect slash-variant-${s.variant}`} />
-                ))}
               {damagePopups
                 .filter(p => p.enemyId === enemy.id)
                 .map(p => (
