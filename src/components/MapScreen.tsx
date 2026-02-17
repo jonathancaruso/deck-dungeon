@@ -24,10 +24,15 @@ export default function MapScreen({ gameState, onEnterNode }: MapScreenProps) {
   // Auto-scroll to current floor area
   useEffect(() => {
     if (scrollRef.current) {
-      const currentFloorIndex = floors.indexOf(gameState.currentFloor - 1)
-      if (currentFloorIndex >= 0) {
-        const scrollTarget = (currentFloorIndex / floors.length) * scrollRef.current.scrollHeight
-        scrollRef.current.scrollTo({ top: Math.max(0, scrollTarget - 200), behavior: 'smooth' })
+      if (gameState.currentFloor <= 1) {
+        // New game: scroll to bottom immediately so player sees floor 1
+        scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+      } else {
+        const currentFloorIndex = floors.indexOf(gameState.currentFloor - 1)
+        if (currentFloorIndex >= 0) {
+          const scrollTarget = (currentFloorIndex / floors.length) * scrollRef.current.scrollHeight
+          scrollRef.current.scrollTo({ top: Math.max(0, scrollTarget - 200), behavior: 'smooth' })
+        }
       }
     }
   }, [gameState.currentFloor])
