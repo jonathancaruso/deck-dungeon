@@ -21,19 +21,24 @@ export default function Home() {
     }
   }, [gameState])
 
+  // Clear save on game over or victory
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const savedGame = localStorage.getItem('deck-dungeon-save')
-      if (savedGame) {
-        try {
-          const parsedGame = JSON.parse(savedGame)
-          dispatch({ type: 'LOAD_GAME', gameState: parsedGame })
-        } catch (e) {
-          console.error('Failed to load saved game:', e)
-        }
+    if (gameState.gamePhase === 'game_over' || gameState.gamePhase === 'victory') {
+      localStorage.removeItem('deck-dungeon-save')
+    }
+  }, [gameState.gamePhase])
+
+  const handleContinueGame = () => {
+    const savedGame = localStorage.getItem('deck-dungeon-save')
+    if (savedGame) {
+      try {
+        const parsedGame = JSON.parse(savedGame)
+        dispatch({ type: 'LOAD_GAME', gameState: parsedGame })
+      } catch (e) {
+        console.error('Failed to load saved game:', e)
       }
     }
-  }, [])
+  }
 
   return (
     <div className="min-h-screen flex flex-col relative z-10">
@@ -79,7 +84,10 @@ export default function Home() {
       {/* Main Content */}
       <main className="flex-1 max-w-6xl mx-auto w-full p-3 sm:p-4">
         {gameState.gamePhase === 'menu' && (
-          <MainMenu onStartGame={() => dispatch({ type: 'START_NEW_GAME' })} />
+          <MainMenu 
+            onStartGame={() => dispatch({ type: 'START_NEW_GAME' })} 
+            onContinueGame={handleContinueGame}
+          />
         )}
         
         {gameState.gamePhase === 'map' && (
