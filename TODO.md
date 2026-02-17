@@ -5,7 +5,7 @@
 ## Backlog
 - [x] Sound effects (procedural Web Audio API SFX)
 - [x] More card variety (Act 2/3 exclusive cards)
-- [ ] Additional relics
+- [x] Additional relics
 - [ ] More event encounters
 - [ ] Mobile touch optimization
 
