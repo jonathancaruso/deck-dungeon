@@ -89,7 +89,7 @@ function getRandomNodeType(): NodeType {
 
 export function getAvailableNodes(nodes: MapNode[], completedNodeId?: string): MapNode[] {
   if (!completedNodeId) {
-    return nodes.filter(n => n.available)
+    return nodes.filter(n => n.available && !n.completed)
   }
   
   const completedNode = nodes.find(n => n.id === completedNodeId)

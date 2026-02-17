@@ -84,7 +84,7 @@ export default function MapScreen({ gameState, onEnterNode }: MapScreenProps) {
                     <button
                       key={node.id}
                       disabled={!isAvailable}
-                      onClick={() => isAvailable && onEnterNode(node.id)}
+                      onClick={() => isAvailable && !isCompleted && onEnterNode(node.id)}
                       className={`map-node bg-gradient-to-b ${getNodeBg(node.type)} ${
                         isCompleted ? 'map-node-completed' : 
                         isAvailable ? 'map-node-available' : 'map-node-unavailable'
