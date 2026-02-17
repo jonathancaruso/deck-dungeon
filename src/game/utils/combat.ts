@@ -85,7 +85,7 @@ export function applyCardEffects(card: Card, combatState: CombatState, targetEne
   
   // Handle special effects
   if (card.special) {
-    handleSpecialEffects(card.special, newState, targetEnemy)
+    handleSpecialEffects(card.special, newState, targetEnemy, card)
   }
   
   return newState
@@ -102,13 +102,20 @@ function applyDamageToEnemy(enemy: Enemy, damage: number, combatState: CombatSta
   // Enemy killed - this will be handled in the reducer
 }
 
-function handleSpecialEffects(special: string, combatState: CombatState, targetEnemy?: Enemy): void {
+function handleSpecialEffects(special: string, combatState: CombatState, targetEnemy?: Enemy, card?: Card): void {
   switch (special) {
     case 'cleave':
       // Damage all enemies - handled in card play logic
       break
     case 'draw_card':
       combatState.hand.push(...drawCards(combatState, 1).hand.slice(-1))
+      break
+    case 'multi_hit':
+      // Second hit (first hit already applied above)
+      if (targetEnemy && card) {
+        const damage = calculateCardDamage(card, combatState)
+        applyDamageToEnemy(targetEnemy, damage, combatState)
+      }
       break
     case 'execute':
       if (targetEnemy && targetEnemy.hp === 0) {

@@ -13,7 +13,7 @@
 - [ ] Daily challenge mode (seeded runs)
 
 ## Done
-- [x] Combat animations (slash VFX, turn banners, card play, energy transitions)
+- [x] Combat animations + block system (slash VFX, shield flash, block mechanic, turn banners)
 - [x] Core combat system with status effects
 - [x] 40+ cards (Attack, Skill, Power)
 - [x] 3 acts with bosses
