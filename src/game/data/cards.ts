@@ -378,6 +378,130 @@ export const CARDS: Record<string, Card> = {
     special: 'evolve'
   },
 
+  // ACT 2+ EXCLUSIVE CARDS
+  searing_blow: {
+    id: 'searing_blow',
+    name: 'Searing Blow',
+    type: 'attack',
+    cost: 2,
+    damage: 12,
+    description: 'Deal 12 damage. This card gains 6 damage permanently.',
+    rarity: 'uncommon',
+    special: 'searing_blow'
+  },
+  uppercut: {
+    id: 'uppercut',
+    name: 'Uppercut',
+    type: 'attack',
+    cost: 2,
+    damage: 13,
+    description: 'Deal 13 damage. Apply 1 Weak and 1 Vulnerable.',
+    rarity: 'uncommon',
+    special: 'uppercut'
+  },
+  body_slam: {
+    id: 'body_slam',
+    name: 'Body Slam',
+    type: 'attack',
+    cost: 1,
+    damage: 0,
+    description: 'Deal damage equal to your Block.',
+    rarity: 'uncommon',
+    special: 'body_slam'
+  },
+  impervious: {
+    id: 'impervious',
+    name: 'Impervious',
+    type: 'skill',
+    cost: 2,
+    block: 30,
+    description: 'Gain 30 Block. Exhaust.',
+    rarity: 'rare',
+    exhaust: true
+  },
+  offering: {
+    id: 'offering',
+    name: 'Offering',
+    type: 'skill',
+    cost: 0,
+    description: 'Lose 6 HP. Gain 2 energy. Draw 3 cards. Exhaust.',
+    rarity: 'rare',
+    exhaust: true,
+    special: 'offering'
+  },
+  infernal_blade: {
+    id: 'infernal_blade',
+    name: 'Infernal Blade',
+    type: 'attack',
+    cost: 1,
+    damage: 6,
+    description: 'Deal 6 damage. Apply 4 Vulnerable.',
+    rarity: 'common',
+    statusEffect: { type: 'vulnerable', amount: 4, target: 'enemy' }
+  },
+
+  // ACT 3 EXCLUSIVE CARDS
+  reaper: {
+    id: 'reaper',
+    name: 'Reaper',
+    type: 'attack',
+    cost: 2,
+    damage: 4,
+    description: 'Deal 4 damage to ALL enemies. Heal HP equal to unblocked damage dealt.',
+    rarity: 'rare',
+    special: 'reaper'
+  },
+  feed: {
+    id: 'feed',
+    name: 'Feed',
+    type: 'attack',
+    cost: 1,
+    damage: 10,
+    description: 'Deal 10 damage. If this kills, gain 3 max HP. Exhaust.',
+    rarity: 'rare',
+    exhaust: true,
+    special: 'feed'
+  },
+  limit_break: {
+    id: 'limit_break',
+    name: 'Limit Break',
+    type: 'skill',
+    cost: 1,
+    description: 'Double your Strength. Exhaust.',
+    rarity: 'rare',
+    exhaust: true,
+    special: 'limit_break'
+  },
+  immolate: {
+    id: 'immolate',
+    name: 'Immolate',
+    type: 'attack',
+    cost: 2,
+    damage: 21,
+    description: 'Deal 21 damage to ALL enemies. Shuffle a Wound into your discard pile.',
+    rarity: 'rare',
+    special: 'immolate'
+  },
+  dark_embrace: {
+    id: 'dark_embrace',
+    name: 'Dark Embrace',
+    type: 'power',
+    cost: 2,
+    description: 'Whenever a card is Exhausted, draw 1 card.',
+    rarity: 'rare',
+    special: 'dark_embrace'
+  },
+  sentinel: {
+    id: 'sentinel',
+    name: 'Sentinel',
+    type: 'skill',
+    cost: 1,
+    block: 5,
+    description: 'Gain 5 Block. If Exhausted, gain 2 energy.',
+    rarity: 'uncommon',
+    special: 'sentinel'
+  },
+
   // STATUS/CURSE CARDS
   wound: {
     id: 'wound',
@@ -403,13 +527,13 @@ export const CARD_POOLS = {
     rare: ['rampage', 'blood_for_blood', 'carnage', 'adrenaline', 'demon_form', 'juggernaut', 'barricade', 'corruption']
   },
   2: {
-    common: ['heavy_slash', 'cleave', 'fury', 'poison_strike', 'wild_strike', 'twin_strike', 'berserk', 'dodge', 'smoke_bomb', 'shrug_it_off', 'flex', 'prepare', 'strength_up'],
-    uncommon: ['execute', 'backstab', 'headbutt', 'fortify', 'second_wind', 'dark_ritual', 'disarm', 'intimidate', 'rage', 'cleanse', 'thorns', 'regeneration', 'battle_trance', 'metallicize', 'evolve'],
-    rare: ['rampage', 'blood_for_blood', 'carnage', 'adrenaline', 'demon_form', 'juggernaut', 'barricade', 'corruption']
+    common: ['heavy_slash', 'cleave', 'fury', 'poison_strike', 'wild_strike', 'twin_strike', 'berserk', 'infernal_blade', 'dodge', 'smoke_bomb', 'shrug_it_off', 'flex', 'prepare', 'strength_up'],
+    uncommon: ['execute', 'backstab', 'headbutt', 'searing_blow', 'uppercut', 'body_slam', 'sentinel', 'fortify', 'second_wind', 'dark_ritual', 'disarm', 'intimidate', 'rage', 'cleanse', 'thorns', 'regeneration', 'battle_trance', 'metallicize', 'evolve'],
+    rare: ['rampage', 'blood_for_blood', 'carnage', 'adrenaline', 'impervious', 'offering', 'demon_form', 'juggernaut', 'barricade', 'corruption']
   },
   3: {
-    common: ['heavy_slash', 'cleave', 'fury', 'poison_strike', 'wild_strike', 'twin_strike', 'berserk', 'dodge', 'smoke_bomb', 'shrug_it_off', 'flex', 'prepare', 'strength_up'],
-    uncommon: ['execute', 'backstab', 'headbutt', 'fortify', 'second_wind', 'dark_ritual', 'disarm', 'intimidate', 'rage', 'cleanse', 'thorns', 'regeneration', 'battle_trance', 'metallicize', 'evolve'],
-    rare: ['rampage', 'blood_for_blood', 'carnage', 'adrenaline', 'demon_form', 'juggernaut', 'barricade', 'corruption']
+    common: ['heavy_slash', 'cleave', 'fury', 'poison_strike', 'wild_strike', 'twin_strike', 'berserk', 'infernal_blade', 'dodge', 'smoke_bomb', 'shrug_it_off', 'flex', 'prepare', 'strength_up'],
+    uncommon: ['execute', 'backstab', 'headbutt', 'searing_blow', 'uppercut', 'body_slam', 'sentinel', 'fortify', 'second_wind', 'dark_ritual', 'disarm', 'intimidate', 'rage', 'cleanse', 'thorns', 'regeneration', 'battle_trance', 'metallicize', 'evolve'],
+    rare: ['rampage', 'blood_for_blood', 'carnage', 'adrenaline', 'impervious', 'offering', 'reaper', 'feed', 'limit_break', 'immolate', 'dark_embrace', 'demon_form', 'juggernaut', 'barricade', 'corruption']
   }
 }

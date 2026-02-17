@@ -254,6 +254,74 @@ function handleSpecialEffects(special: string, combatState: CombatState, targetE
     }
     case 'unplayable':
       break
+    case 'searing_blow':
+      if (card && card.damage) {
+        card.damage += 6
+      }
+      break
+    case 'uppercut':
+      if (targetEnemy) {
+        targetEnemy.statusEffects.weak = (targetEnemy.statusEffects.weak || 0) + 1
+        targetEnemy.statusEffects.vulnerable = (targetEnemy.statusEffects.vulnerable || 0) + 1
+      }
+      break
+    case 'body_slam':
+      // Damage = current block, applied to target
+      if (targetEnemy) {
+        const blockDmg = combatState.player.block || 0
+        applyDamageToEnemy(targetEnemy, blockDmg, combatState)
+      }
+      break
+    case 'offering': {
+      combatState.player = { ...combatState.player, hp: Math.max(0, combatState.player.hp - 6) }
+      combatState.energy += 2
+      const drawnOff = drawCards(combatState, 3)
+      combatState.hand = drawnOff.hand
+      combatState.drawPile = drawnOff.drawPile
+      combatState.discardPile = drawnOff.discardPile
+      break
+    }
+    case 'reaper': {
+      const reapDmg = calculateCardDamage(card!, combatState)
+      let totalHealed = 0
+      combatState.enemies.forEach(enemy => {
+        if (enemy.hp > 0) {
+          const vuln = (enemy.statusEffects.vulnerable || 0) > 0 ? 1.5 : 1
+          const effectiveDmg = Math.floor(reapDmg * vuln)
+          const actualDmg = Math.min(enemy.hp, effectiveDmg)
+          enemy.hp = Math.max(0, enemy.hp - effectiveDmg)
+          totalHealed += actualDmg
+        }
+      })
+      combatState.player = { ...combatState.player, hp: Math.min(combatState.player.maxHp, combatState.player.hp + totalHealed) }
+      break
+    }
+    case 'feed':
+      if (targetEnemy && targetEnemy.hp === 0) {
+        combatState.player = { ...combatState.player, maxHp: combatState.player.maxHp + 3, hp: combatState.player.hp + 3 }
+      }
+      break
+    case 'limit_break': {
+      const currentStr = combatState.player.statusEffects.strength || 0
+      combatState.player.statusEffects.strength = currentStr * 2
+      break
+    }
+    case 'immolate': {
+      const immDmg = calculateCardDamage(card!, combatState)
+      combatState.enemies.forEach(enemy => {
+        if (enemy.hp > 0) {
+          applyDamageToEnemy(enemy, immDmg, combatState)
+        }
+      })
+      const woundCard: Card = { id: 'wound', name: 'Wound', type: 'skill', cost: 0, description: 'Unplayable.', rarity: 'common', special: 'unplayable' }
+      combatState.discardPile.push(woundCard)
+      break
+    }
+    case 'sentinel':
+      // Block already applied. Energy on exhaust handled by exhaust logic if needed.
+      // For simplicity, grant 2 energy since it always exhausts
+      combatState.energy += 2
+      break
   }
 }
 
