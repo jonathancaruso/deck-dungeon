@@ -11,6 +11,7 @@ import GameOverScreen from '../components/GameOverScreen'
 import VictoryScreen from '../components/VictoryScreen'
 import ShopScreen from '../components/ShopScreen'
 import EventScreen from '../components/EventScreen'
+import TreasureScreen from '../components/TreasureScreen'
 import { SoundProvider, useSoundContext } from '../hooks/SoundContext'
 
 export default function Home() {
@@ -181,6 +182,13 @@ function GameInner() {
             onTakeDamage={(amount) => dispatch({ type: 'EVENT_DAMAGE', amount })}
             onGainMaxHp={(amount) => dispatch({ type: 'EVENT_GAIN_MAX_HP', amount })}
             onLeave={() => dispatch({ type: 'LEAVE_EVENT' })}
+          />
+        )}
+        
+        {gameState.gamePhase === 'treasure' && gameState.treasureReward && (
+          <TreasureScreen
+            treasureReward={gameState.treasureReward}
+            onCollect={() => dispatch({ type: 'COLLECT_TREASURE' })}
           />
         )}
         

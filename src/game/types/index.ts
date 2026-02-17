@@ -121,9 +121,10 @@ export interface GameState {
   currentFloor: number
   map: MapNode[]
   currentNode?: MapNode
-  gamePhase: 'menu' | 'map' | 'combat' | 'card_reward' | 'rest' | 'shop' | 'event' | 'game_over' | 'victory'
+  gamePhase: 'menu' | 'map' | 'combat' | 'card_reward' | 'rest' | 'shop' | 'event' | 'treasure' | 'game_over' | 'victory'
   combatState?: CombatState
   currentEvent?: GameEvent
+  treasureReward?: { gold: number; relic?: Relic }
   runStats: {
     floorsCleared: number
     enemiesKilled: number

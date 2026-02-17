@@ -1,6 +1,7 @@
 import { GameState, CombatState, Card, Enemy } from '../types'
 import { CARDS, STARTER_DECK } from '../data/cards'
 import { ENEMIES, ENEMY_ENCOUNTERS } from '../data/enemies'
+import { RELICS } from '../data/relics'
 import { generateMap, getAvailableNodes } from './mapGenerator'
 import { shuffleDeck, drawCards, applyCardEffects, processStatusEffects, enemyAI } from './combat'
 
@@ -28,6 +29,7 @@ export type GameAction =
   | { type: 'EVENT_DAMAGE'; amount: number }
   | { type: 'EVENT_GAIN_MAX_HP'; amount: number }
   | { type: 'LEAVE_EVENT' }
+  | { type: 'COLLECT_TREASURE' }
   | { type: 'USE_POTION'; potionId: string; targetEnemyId?: string }
   | { type: 'ADVANCE_ACT' }
   | { type: 'GAME_OVER' }
@@ -100,9 +102,19 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         case 'event':
           return { ...newState, gamePhase: 'event' }
         
-        case 'treasure':
-          // TODO: Implement treasure
-          return { ...newState, gamePhase: 'map' }
+        case 'treasure': {
+          const goldReward = 50 + Math.floor(Math.random() * 50)
+          const treasurePlayer = { ...newState.player, gold: newState.player.gold + goldReward }
+          const availableRelics = Object.values(RELICS).filter(
+            r => !newState.player.relics.some(pr => pr.id === r.id)
+          )
+          let treasureRelic: typeof availableRelics[0] | undefined
+          if (availableRelics.length > 0 && Math.random() < 0.5) {
+            treasureRelic = availableRelics[Math.floor(Math.random() * availableRelics.length)]
+            treasurePlayer.relics = [...treasurePlayer.relics, treasureRelic]
+          }
+          return { ...newState, player: treasurePlayer, gamePhase: 'treasure', treasureReward: { gold: goldReward, relic: treasureRelic } }
+        }
         
         default:
           return newState
@@ -417,6 +429,14 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case 'EVENT_GAIN_MAX_HP':
       return { ...state, player: { ...state.player, maxHp: state.player.maxHp + action.amount, hp: state.player.hp + action.amount } }
     
+    case 'COLLECT_TREASURE': {
+      const newState = { ...state }
+      newState.map = [...state.map]
+      getAvailableNodes(newState.map, state.currentNode?.id)
+      newState.runStats = { ...state.runStats, floorsCleared: state.runStats.floorsCleared + 1 }
+      return { ...newState, gamePhase: 'map', currentNode: undefined, treasureReward: undefined }
+    }
+
     case 'LEAVE_EVENT': {
       const newState = { ...state }
       newState.map = [...state.map]
