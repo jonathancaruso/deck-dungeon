@@ -11,6 +11,12 @@ interface DamagePopup {
   type: 'damage' | 'heal' | 'block'
 }
 
+interface SlashEffect {
+  id: number
+  enemyId: string
+  variant: number
+}
+
 interface CombatScreenProps {
   combatState: CombatState
   onPlayCard: (cardId: string, targetEnemyId?: string) => void
@@ -25,9 +31,19 @@ export default function CombatScreen({ combatState, onPlayCard, onEndTurn, onCom
   const [playerHit, setPlayerHit] = useState(false)
   const [damagePopups, setDamagePopups] = useState<DamagePopup[]>([])
   const [turnAnimating, setTurnAnimating] = useState(false)
+  const [showTurnBanner, setShowTurnBanner] = useState<'player' | 'enemy' | null>(null)
+  const [playingCardId, setPlayingCardId] = useState<string | null>(null)
+  const [slashEffects, setSlashEffects] = useState<SlashEffect[]>([])
+  const [blockGained, setBlockGained] = useState(false)
+  const [shieldFlash, setShieldFlash] = useState(false)
   const prevEnemyHp = useRef<Record<string, number>>({})
   const prevPlayerHp = useRef(combatState.player.hp)
+  const prevIsPlayerTurn = useRef(combatState.isPlayerTurn)
+  const prevEnergy = useRef(combatState.energy)
+  const prevPlayerBlock = useRef(0)
   const popupCounter = useRef(0)
+  const slashCounter = useRef(0)
+  const isFirstRender = useRef(true)
   
   useEffect(() => {
     if (combatState.combatEnded && combatState.victory) {
@@ -36,9 +52,10 @@ export default function CombatScreen({ combatState, onPlayCard, onEndTurn, onCom
     }
   }, [combatState.combatEnded, combatState.victory, onCombatEnd])
 
-  // Detect HP changes for damage/heal popups + hit animations
+  // Detect HP changes for damage/heal popups + hit animations + slash effects
   useEffect(() => {
     const newPopups: DamagePopup[] = []
+    const newSlashes: SlashEffect[] = []
     
     // Check enemy HP changes
     combatState.enemies.forEach(enemy => {
@@ -46,11 +63,17 @@ export default function CombatScreen({ combatState, onPlayCard, onEndTurn, onCom
       if (prevHp !== undefined && enemy.hp < prevHp) {
         const dmg = prevHp - enemy.hp
         newPopups.push({ id: popupCounter.current++, enemyId: enemy.id, amount: dmg, type: 'damage' })
+        newSlashes.push({ id: slashCounter.current++, enemyId: enemy.id, variant: Math.floor(Math.random() * 3) })
         setHitEnemies(prev => new Set(prev).add(enemy.id))
         setTimeout(() => setHitEnemies(prev => { const s = new Set(prev); s.delete(enemy.id); return s }), 400)
       }
       prevEnemyHp.current[enemy.id] = enemy.hp
     })
+    
+    if (newSlashes.length > 0) {
+      setSlashEffects(prev => [...prev, ...newSlashes])
+      setTimeout(() => setSlashEffects(prev => prev.filter(s => !newSlashes.find(ns => ns.id === s.id))), 600)
+    }
     
     // Check player HP changes
     if (prevPlayerHp.current > combatState.player.hp) {
@@ -73,14 +96,50 @@ export default function CombatScreen({ combatState, onPlayCard, onEndTurn, onCom
     }
   }, [combatState])
 
-  // Turn start animation
+  // Energy spend animation
   useEffect(() => {
-    if (combatState.isPlayerTurn) {
-      setTurnAnimating(true)
-      setTimeout(() => setTurnAnimating(false), 800)
+    if (!isFirstRender.current && combatState.energy < prevEnergy.current) {
+      setBlockGained(false) // reset
+      // If energy went down, a card was played — could be block
     }
-  }, [combatState.turn])
+    prevEnergy.current = combatState.energy
+  }, [combatState.energy])
+
+  // Turn change banner
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false
+      prevIsPlayerTurn.current = combatState.isPlayerTurn
+      return
+    }
+    if (combatState.isPlayerTurn !== prevIsPlayerTurn.current) {
+      setShowTurnBanner(combatState.isPlayerTurn ? 'player' : 'enemy')
+      setTimeout(() => setShowTurnBanner(null), 1200)
+      if (combatState.isPlayerTurn) {
+        setTurnAnimating(true)
+        setTimeout(() => setTurnAnimating(false), 800)
+      }
+      prevIsPlayerTurn.current = combatState.isPlayerTurn
+    }
+  }, [combatState.isPlayerTurn, combatState.turn])
   
+  // Detect block gain for shield flash
+  useEffect(() => {
+    const currentBlock = (combatState.player as any).block || 0
+    if (currentBlock > prevPlayerBlock.current && currentBlock > 0) {
+      setShieldFlash(true)
+      setBlockGained(true)
+      const blockAmt = currentBlock - prevPlayerBlock.current
+      setDamagePopups(prev => [...prev, { id: popupCounter.current++, isPlayer: true, amount: blockAmt, type: 'block' }])
+      setTimeout(() => {
+        setShieldFlash(false)
+        setBlockGained(false)
+        setDamagePopups(prev => prev.slice(1))
+      }, 700)
+    }
+    prevPlayerBlock.current = currentBlock
+  }, [(combatState.player as any).block])
+
   const handleCardClick = (card: Card) => {
     if (combatState.combatEnded || !combatState.isPlayerTurn) return
     if (combatState.energy < card.cost) return
@@ -88,16 +147,27 @@ export default function CombatScreen({ combatState, onPlayCard, onEndTurn, onCom
     if (card.type === 'attack') {
       setSelectedCard(selectedCard?.id === card.id ? null : card)
     } else {
-      onPlayCard(card.id)
-      setSelectedCard(null)
+      // Play card with animation
+      setPlayingCardId(card.id)
+      setTimeout(() => {
+        onPlayCard(card.id)
+        setPlayingCardId(null)
+        setSelectedCard(null)
+      }, 250)
     }
   }
   
   const handleEnemyClick = (enemy: Enemy) => {
     if (!selectedCard || combatState.combatEnded || !combatState.isPlayerTurn) return
     if (enemy.hp <= 0) return
-    onPlayCard(selectedCard.id, enemy.id)
-    setSelectedCard(null)
+    // Play card with animation
+    setPlayingCardId(selectedCard.id)
+    const cardId = selectedCard.id
+    setTimeout(() => {
+      onPlayCard(cardId, enemy.id)
+      setPlayingCardId(null)
+      setSelectedCard(null)
+    }, 250)
   }
   
   const renderStatusEffects = (statusEffects: Partial<Record<StatusEffect, number>>) => {
@@ -118,9 +188,19 @@ export default function CombatScreen({ combatState, onPlayCard, onEndTurn, onCom
   }
   
   const hpPercent = (combatState.player.hp / combatState.player.maxHp) * 100
+  const playerBlock = (combatState.player as any).block || 0
   
   return (
     <div className={`flex flex-col h-full min-h-[80vh] ${screenShake ? 'screen-shake' : ''}`}>
+      
+      {/* Turn Banner Overlay */}
+      {showTurnBanner && (
+        <div className="turn-banner-overlay">
+          <div className={`turn-banner ${showTurnBanner === 'player' ? 'turn-banner-player' : 'turn-banner-enemy'}`}>
+            {showTurnBanner === 'player' ? '⚔️ Your Turn' : '💀 Enemy Turn'}
+          </div>
+        </div>
+      )}
       
       {/* Turn & Energy Header */}
       <div className="panel p-3 mb-3 flex items-center justify-between flex-wrap gap-2">
@@ -128,7 +208,7 @@ export default function CombatScreen({ combatState, onPlayCard, onEndTurn, onCom
           <span className="text-gray-400 text-sm font-medium">Turn {combatState.turn}</span>
           <div className="flex gap-1.5">
             {Array.from({ length: combatState.maxEnergy }).map((_, i) => (
-              <div key={i} className={`energy-orb ${i >= combatState.energy ? 'opacity-25 grayscale' : ''}`}
+              <div key={i} className={`energy-orb ${i >= combatState.energy ? 'energy-orb-spent' : 'energy-orb-active'}`}
                 style={{ width: 36, height: 36, fontSize: '14px' }}>
                 {i < combatState.energy ? '⚡' : '·'}
               </div>
@@ -155,6 +235,19 @@ export default function CombatScreen({ combatState, onPlayCard, onEndTurn, onCom
                 isHit={hitEnemies.has(enemy.id)}
                 onClick={() => handleEnemyClick(enemy)}
               />
+              {/* Slash VFX */}
+              {slashEffects
+                .filter(s => s.enemyId === enemy.id)
+                .map(s => (
+                  <div key={s.id} className={`slash-effect slash-variant-${s.variant}`} />
+                ))}
+              {/* Damage popups */}
+              {/* Slash VFX */}
+              {slashEffects
+                .filter(s => s.enemyId === enemy.id)
+                .map(s => (
+                  <div key={s.id} className={`slash-effect slash-variant-${s.variant}`} />
+                ))}
               {damagePopups
                 .filter(p => p.enemyId === enemy.id)
                 .map(p => (
@@ -166,7 +259,7 @@ export default function CombatScreen({ combatState, onPlayCard, onEndTurn, onCom
       </div>
       
       {/* Player Area (bottom) */}
-      <div className={`panel p-4 border-t-2 border-gray-700/40 animate-slide-up ${playerHit ? 'player-hit' : ''} ${turnAnimating ? 'turn-start' : ''}`}>
+      <div className={`panel p-4 border-t-2 border-gray-700/40 animate-slide-up ${playerHit ? 'player-hit' : ''} ${turnAnimating ? 'turn-start' : ''} ${shieldFlash ? 'shield-flash' : ''}`}>
         {/* Player Stats Row */}
         <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
           <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -178,13 +271,20 @@ export default function CombatScreen({ combatState, onPlayCard, onEndTurn, onCom
               {combatState.player.hp}/{combatState.player.maxHp}
             </span>
             
+            {/* Block indicator */}
+            {playerBlock > 0 && (
+              <div className={`block-indicator ${shieldFlash ? 'block-indicator-flash' : ''}`}>
+                🛡️ {playerBlock}
+              </div>
+            )}
+            
             {/* Player damage/heal popups */}
             <div className="relative">
               {damagePopups
                 .filter(p => p.isPlayer)
                 .map(p => (
                   <div key={p.id} className={`damage-number ${p.type === 'heal' ? 'damage-number-heal' : p.type === 'block' ? 'damage-number-block' : ''}`}>
-                    {p.type === 'damage' ? `-${p.amount}` : `+${p.amount}`}
+                    {p.type === 'damage' ? `-${p.amount}` : p.type === 'block' ? `+${p.amount} 🛡️` : `+${p.amount}`}
                   </div>
                 ))}
             </div>
@@ -207,10 +307,14 @@ export default function CombatScreen({ combatState, onPlayCard, onEndTurn, onCom
         {/* Hand */}
         <div className="card-fan flex justify-center items-end min-h-[180px] sm:min-h-[200px] pb-1 overflow-x-auto">
           {combatState.hand.map((card, index) => (
-            <div key={`${card.id}-${index}`} className="card-draw" style={{ animationDelay: `${index * 60}ms` }}>
+            <div
+              key={`${card.id}-${index}`}
+              className={`card-draw ${playingCardId === card.id ? 'card-playing' : ''}`}
+              style={{ animationDelay: `${index * 60}ms` }}
+            >
               <CardComponent
                 card={card}
-                isPlayable={combatState.energy >= card.cost && combatState.isPlayerTurn && !combatState.combatEnded}
+                isPlayable={combatState.energy >= card.cost && combatState.isPlayerTurn && !combatState.combatEnded && playingCardId === null}
                 isSelected={selectedCard?.id === card.id}
                 onClick={() => handleCardClick(card)}
               />
