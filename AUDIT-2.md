@@ -112,13 +112,13 @@
 - **Description:** EventScreen generates its own inline events with `useMemo` and `Math.random()`. The carefully designed events in `src/game/data/events.ts` are completely unused.
 - **Fix:** Wire EventScreen to use EVENTS data from events.ts.
 
-### BUG-15: Trapped Chest event has double-random (result text and action differ)
+### BUG-15: Trapped Chest event has double-random (result text and action differ) ✅ FIXED
 - **Severity:** Medium
 - **File:** `src/components/EventScreen.tsx`
 - **Description:** The "Kick it open" choice calls `Math.random()` separately for the result text and the action callback. The text might say "No trap!" but the action deals damage (or vice versa) because each evaluates independently.
 - **Fix:** Pre-determine the random outcome and use it for both text and action.
 
-### BUG-16: Shop card IDs are modified with random suffixes
+### BUG-16: Shop card IDs are modified with random suffixes ✅ FIXED
 - **Severity:** Medium
 - **File:** `src/components/ShopScreen.tsx`
 - **Description:** Cards get IDs like `shop-strike-abc123`. This could break any logic relying on matching card IDs to template IDs (e.g., upgrade logic, card mastery relic).
