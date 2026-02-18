@@ -592,13 +592,126 @@ body::before {
   transform: scale(0.9);
 }
 
+/* ========== TOUCH OPTIMIZATION ========== */
+
+/* Prevent double-tap zoom on all interactive elements */
+.game-button,
+.game-button-secondary,
+.game-button-end-turn,
+.card,
+.enemy,
+.map-node,
+.rest-option,
+button {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Prevent text selection during gameplay */
+.card, .enemy, .map-node {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Card preview modal (long-press) */
+.card-preview-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 60;
+  animation: fadeIn 0.15s ease-out;
+  backdrop-filter: blur(4px);
+}
+.card-preview-overlay .card {
+  transform: scale(1.8);
+  pointer-events: none;
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Swipe hint for card hand */
+.swipe-hint {
+  @apply text-center text-gray-600 text-xs py-1;
+  animation: swipeHintFade 3s ease-out forwards;
+}
+@keyframes swipeHintFade {
+  0%, 60% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
 /* ========== MOBILE RESPONSIVE ========== */
 @media (max-width: 640px) {
   .card {
     min-width: 120px;
     padding: 8px;
   }
+
+  /* Scrollable card hand on mobile instead of overlapping fan */
+  .card-fan {
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+    padding: 8px 16px 8px 16px;
+    gap: 8px;
+    min-height: 170px !important;
+    perspective: none;
+  }
   .card-fan > div {
-    margin: 0 -12px;
+    margin: 0 !important;
+    flex-shrink: 0;
+    scroll-snap-align: center;
+  }
+  /* Disable hover lift on touch — use tap instead */
+  .card-playable {
+    transform: none;
+  }
+  .card-playable:hover {
+    transform: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  }
+  .card-playable:active {
+    transform: scale(0.96);
+    transition: transform 0.1s;
+  }
+
+  /* Bigger enemy touch targets on mobile */
+  .enemy {
+    min-width: 140px;
+    min-height: 180px;
+    padding: 12px;
+  }
+  .enemy-targetable {
+    padding: 14px;
+  }
+
+  /* End Turn button — full width on mobile for easy reach */
+  .game-button-end-turn {
+    width: 100%;
+    margin-top: 8px;
+    padding: 16px;
+    font-size: 1.1rem;
+  }
+
+  /* Map nodes bigger on mobile */
+  .map-node {
+    width: 60px;
+    height: 60px;
+    min-width: 60px;
+    min-height: 60px;
+  }
+
+  /* Hide scrollbar on card hand */
+  .card-fan::-webkit-scrollbar {
+    display: none;
+  }
+  .card-fan {
+    scrollbar-width: none;
   }
 }

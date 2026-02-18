@@ -149,8 +149,33 @@ export default function CombatScreen({ combatState, onPlayCard, onEndTurn, onCom
   }, [combatState.player.block])
 
   const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null)
+  const [previewCard, setPreviewCard] = useState<Card | null>(null)
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const longPressTriggered = useRef(false)
+  const [showSwipeHint, setShowSwipeHint] = useState(true)
+
+  const handleTouchStart = (card: Card) => {
+    longPressTriggered.current = false
+    longPressTimer.current = setTimeout(() => {
+      longPressTriggered.current = true
+      setPreviewCard(card)
+    }, 400)
+  }
+  const handleTouchEnd = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current)
+      longPressTimer.current = null
+    }
+  }
+  const handleTouchMove = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current)
+      longPressTimer.current = null
+    }
+  }
 
   const handleCardClick = (card: Card, index: number) => {
+    if (longPressTriggered.current) return
     if (combatState.combatEnded || !combatState.isPlayerTurn) return
     if (combatState.energy < card.cost) return
     
@@ -308,11 +333,19 @@ export default function CombatScreen({ combatState, onPlayCard, onEndTurn, onCom
           <button
             onClick={onEndTurn}
             disabled={combatState.combatEnded || !combatState.isPlayerTurn}
-            className="game-button-end-turn"
+            className="game-button-end-turn hidden sm:block"
           >
             End Turn
           </button>
         </div>
+        {/* Mobile End Turn — full width below stats */}
+        <button
+          onClick={onEndTurn}
+          disabled={combatState.combatEnded || !combatState.isPlayerTurn}
+          className="game-button-end-turn sm:hidden mb-2"
+        >
+          End Turn
+        </button>
         
         {/* Hand */}
         <div className="card-fan flex justify-center items-end min-h-[180px] sm:min-h-[200px] pb-1 overflow-x-auto">
@@ -321,6 +354,9 @@ export default function CombatScreen({ combatState, onPlayCard, onEndTurn, onCom
               key={`${card.id}-${index}`}
               className={`card-draw ${playingCardIndex === index ? 'card-playing' : ''}`}
               style={{ animationDelay: `${index * 60}ms` }}
+              onTouchStart={() => handleTouchStart(card)}
+              onTouchEnd={handleTouchEnd}
+              onTouchMove={handleTouchMove}
             >
               <CardComponent
                 card={card}
@@ -331,6 +367,9 @@ export default function CombatScreen({ combatState, onPlayCard, onEndTurn, onCom
             </div>
           ))}
         </div>
+        {combatState.hand.length > 4 && showSwipeHint && (
+          <div className="swipe-hint sm:hidden">← swipe to see more cards →</div>
+        )}
         
         {selectedCard && (
           <div className="mt-2 text-center text-yellow-400 text-sm font-medium animate-fade-in-up">
@@ -339,6 +378,16 @@ export default function CombatScreen({ combatState, onPlayCard, onEndTurn, onCom
         )}
       </div>
       
+      {/* Card Preview (long-press) */}
+      {previewCard && (
+        <div className="card-preview-overlay" onClick={() => setPreviewCard(null)} onTouchEnd={() => setPreviewCard(null)}>
+          <div className="flex flex-col items-center gap-4">
+            <CardComponent card={previewCard} isPlayable={false} isReward />
+            <p className="text-gray-400 text-sm">Tap anywhere to close</p>
+          </div>
+        </div>
+      )}
+
       {/* Combat End Overlay */}
       {combatState.combatEnded && (
         <div className="fixed inset-0 bg-black/85 flex items-center justify-center z-50 animate-fade-in-up">

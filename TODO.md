@@ -6,7 +6,7 @@
 - [x] Sound effects (procedural Web Audio API SFX)
 - [x] More card variety (Act 2/3 exclusive cards)
 - [x] Additional relics
-- [ ] More event encounters
+- [x] More event encounters
 - [ ] Mobile touch optimization
 
 - [ ] Stats tracking (runs completed, cards played, enemies killed)
