@@ -165,11 +165,13 @@ function GameInner() {
         {gameState.gamePhase === 'combat' && gameState.combatState && (
           <CombatScreen 
             combatState={gameState.combatState}
-            onPlayCard={(cardId, targetEnemyId) => dispatch({ type: 'PLAY_CARD', cardId, targetEnemyId })}
+            potions={gameState.player.potions}
+            onPlayCard={(cardId, targetEnemyId, cardIndex) => dispatch({ type: 'PLAY_CARD', cardId, cardIndex, targetEnemyId })}
             onEndTurn={() => dispatch({ type: 'END_TURN' })}
             onCombatEnd={() => {
               dispatch({ type: 'SET_PHASE', phase: 'card_reward' })
             }}
+            onUsePotion={(potionId, targetEnemyId) => dispatch({ type: 'USE_POTION', potionId, targetEnemyId })}
           />
         )}
         

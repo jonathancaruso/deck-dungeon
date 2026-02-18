@@ -261,7 +261,7 @@ export const CARDS: Record<string, Card> = {
   rage: {
     id: 'rage',
     name: 'Rage',
-    type: 'skill',
+    type: 'power',
     cost: 0,
     description: 'Whenever you play an Attack, gain 3 Block.',
     rarity: 'uncommon',

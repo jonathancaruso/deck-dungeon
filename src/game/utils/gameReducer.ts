@@ -172,7 +172,14 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       
       // Corruption: skills cost 0
       const hasCorruption = state.combatState.activePowers.some(p => p.special === 'corruption')
-      const effectiveCost = (hasCorruption && card.type === 'skill') ? 0 : card.cost
+      let effectiveCost = (hasCorruption && card.type === 'skill') ? 0 : card.cost
+      // BUG-06 FIX: Blood for Blood cost reduction
+      if (card.special === 'blood_cost') {
+        const startHp = state.player.maxHp
+        const hpLost = startHp - state.combatState.player.hp
+        const timesLostHp = Math.floor(hpLost / 1) // each HP lost counts
+        effectiveCost = Math.max(0, effectiveCost - Math.min(timesLostHp, 4))
+      }
       if (state.combatState.energy < effectiveCost) return state
       
       let targetEnemy: Enemy | undefined
@@ -207,12 +214,32 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         updatedCombatState.energy += 1
       }
       
+      // Relic: ancient_tome — draw 1 card when playing a Power
+      if (card.type === 'power' && state.player.relics.some(r => r.effect === 'power_draw')) {
+        const drawn = drawCards(updatedCombatState, 1)
+        updatedCombatState.hand = drawn.hand
+        updatedCombatState.drawPile = drawn.drawPile
+        updatedCombatState.discardPile = drawn.discardPile
+      }
+      
+      // Relic: rage_crystal — gain 1 Block when playing an Attack
+      if (card.type === 'attack' && state.player.relics.some(r => r.effect === 'attack_block')) {
+        updatedCombatState.player = { ...updatedCombatState.player, block: (updatedCombatState.player.block || 0) + 1 }
+      }
+      
       // Move card to appropriate pile
       if (card.type === 'power') {
         // Power cards stay active for the rest of combat
         updatedCombatState.activePowers.push(card)
       } else if (card.exhaust || (hasCorruption && card.type === 'skill')) {
         // Exhausted cards are removed from game
+        // Dark Embrace: draw 1 card on exhaust
+        if (updatedCombatState.activePowers.some(p => p.special === 'dark_embrace')) {
+          const drawn = drawCards(updatedCombatState, 1)
+          updatedCombatState.hand = drawn.hand
+          updatedCombatState.drawPile = drawn.drawPile
+          updatedCombatState.discardPile = drawn.discardPile
+        }
       } else {
         updatedCombatState.discardPile.push(card)
       }
@@ -239,7 +266,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         ...state.runStats,
         cardsPlayed: state.runStats.cardsPlayed + 1,
         damageDealt: state.runStats.damageDealt + (card.damage || 0),
-        enemiesKilled: state.runStats.enemiesKilled + (aliveEnemies.length === 0 ? 1 : 0)
+        enemiesKilled: state.runStats.enemiesKilled + enemiesKilledNow
       }
 
       return {
@@ -288,6 +315,16 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       
       // Check for player death
       if (newCombatState.player.hp <= 0) {
+        // BUG-04 FIX: Phoenix Feather — revive once
+        const phoenixIdx = state.player.relics.findIndex(r => r.effect === 'phoenix_revival')
+        if (phoenixIdx !== -1) {
+          const reviveHp = Math.floor(state.player.maxHp * 0.25)
+          newCombatState.player = { ...newCombatState.player, hp: reviveHp }
+          // Remove phoenix feather (one use)
+          const newRelics = [...state.player.relics]
+          newRelics.splice(phoenixIdx, 1)
+          return { ...state, player: { ...state.player, relics: newRelics }, combatState: newCombatState }
+        }
         return {
           ...state,
           gamePhase: 'game_over',
@@ -377,6 +414,24 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       newState.map = [...state.map]
       getAvailableNodes(newState.map, state.currentNode?.id)
       newState.runStats.floorsCleared++
+      
+      // BUG-03 FIX: If boss was defeated, advance act instead of returning to map
+      if (state.currentNode?.type === 'boss') {
+        if (state.currentAct >= 3) {
+          return { ...newState, gamePhase: 'victory', combatState: undefined, currentNode: undefined }
+        }
+        const newAct = state.currentAct + 1
+        const actRng = state.dailyChallenge ? createRng(state.dailyChallenge.seed + newAct) : undefined
+        return {
+          ...newState,
+          currentAct: newAct,
+          currentFloor: 0,
+          map: generateMap(newAct, actRng),
+          gamePhase: 'map',
+          combatState: undefined,
+          currentNode: undefined
+        }
+      }
       
       return {
         ...newState,
@@ -687,11 +742,16 @@ function startCombat(state: GameState, enemyIds: string[]): GameState {
   
   startEnergy = Math.max(startEnergy, startMaxEnergy)
   
-  const combatPlayer = { ...state.player, block: startBlock, statusEffects: {} }
+  const combatPlayer = { ...state.player, block: startBlock, statusEffects: {} as Partial<Record<import('../types').StatusEffect, number>> }
   
   // Relic: combat_strength
   if (playerRelics.some(r => r.effect === 'combat_strength')) {
     combatPlayer.statusEffects = { ...combatPlayer.statusEffects, strength: (combatPlayer.statusEffects.strength || 0) + 1 }
+  }
+  
+  // Relic: thorns_ring — start with 1 thorns
+  if (playerRelics.some(r => r.effect === 'thorns_passive')) {
+    combatPlayer.statusEffects = { ...combatPlayer.statusEffects, thorns: (combatPlayer.statusEffects.thorns || 0) + 1 }
   }
   
   // Relic: combat_poison — apply 1 poison to all enemies

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { CombatState, Card, Enemy, StatusEffect } from '../game/types'
+import { CombatState, Card, Enemy, StatusEffect, Potion } from '../game/types'
 import CardComponent from './CardComponent'
 import EnemyComponent from './EnemyComponent'
 import { useSoundContext } from '../hooks/SoundContext'
@@ -20,12 +20,14 @@ interface SlashEffect {
 
 interface CombatScreenProps {
   combatState: CombatState
-  onPlayCard: (cardId: string, targetEnemyId?: string) => void
+  potions: Potion[]
+  onPlayCard: (cardId: string, targetEnemyId?: string, cardIndex?: number) => void
   onEndTurn: () => void
   onCombatEnd: () => void
+  onUsePotion: (potionId: string, targetEnemyId?: string) => void
 }
 
-export default function CombatScreen({ combatState, onPlayCard, onEndTurn, onCombatEnd }: CombatScreenProps) {
+export default function CombatScreen({ combatState, potions, onPlayCard, onEndTurn, onCombatEnd, onUsePotion }: CombatScreenProps) {
   const { play } = useSoundContext()
   const [selectedCard, setSelectedCard] = useState<Card | null>(null)
   const [screenShake, setScreenShake] = useState(false)
@@ -191,7 +193,7 @@ export default function CombatScreen({ combatState, onPlayCard, onEndTurn, onCom
       play(card.type === 'power' ? 'card_power' : 'card_skill')
       setPlayingCardIndex(index)
       setTimeout(() => {
-        onPlayCard(card.id)
+        onPlayCard(card.id, undefined, index)
         setPlayingCardIndex(null)
         setSelectedCard(null)
         setSelectedCardIndex(null)
@@ -206,8 +208,9 @@ export default function CombatScreen({ combatState, onPlayCard, onEndTurn, onCom
     play('card_attack')
     setPlayingCardIndex(selectedCardIndex)
     const cardId = selectedCard.id
+    const cardIdx = selectedCardIndex
     setTimeout(() => {
-      onPlayCard(cardId, enemy.id)
+      onPlayCard(cardId, enemy.id, cardIdx ?? undefined)
       setPlayingCardIndex(null)
       setSelectedCard(null)
       setSelectedCardIndex(null)
@@ -349,6 +352,31 @@ export default function CombatScreen({ combatState, onPlayCard, onEndTurn, onCom
         >
           End Turn
         </button>
+        
+        {/* Potions */}
+        {potions.length > 0 && (
+          <div className="flex gap-2 mb-2 justify-center flex-wrap">
+            {potions.map((potion, i) => (
+              <button
+                key={`${potion.id}-${i}`}
+                onClick={() => {
+                  if (potion.effect === 'poison_6') {
+                    // Need target — use selected enemy or first alive
+                    const target = combatState.enemies.find(e => e.hp > 0)
+                    if (target) onUsePotion(potion.id, target.id)
+                  } else {
+                    onUsePotion(potion.id)
+                  }
+                }}
+                disabled={combatState.combatEnded || !combatState.isPlayerTurn}
+                className="px-3 py-1.5 rounded-lg border border-green-700/40 bg-green-950/30 hover:border-green-400 transition-all text-xs font-bold text-green-300 disabled:opacity-30"
+                title={potion.description}
+              >
+                🧪 {potion.name}
+              </button>
+            ))}
+          </div>
+        )}
         
         {/* Hand */}
         <div className="card-fan flex justify-center items-end min-h-[180px] sm:min-h-[200px] pb-1 overflow-x-auto">

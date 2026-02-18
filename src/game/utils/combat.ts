@@ -71,7 +71,9 @@ export function applyCardEffects(card: Card, combatState: CombatState, targetEne
   const newState = { ...combatState }
   
   // Apply damage — for cleave, hit ALL enemies
-  if (card.damage) {
+  // Cards that handle their own damage in specials skip the general path
+  const selfDamageSpecials = ['reaper', 'immolate', 'whirlwind']
+  if (card.damage && !selfDamageSpecials.includes(card.special || '')) {
     if (card.special === 'cleave') {
       const damage = calculateCardDamage(card, combatState)
       newState.enemies.forEach(enemy => {
