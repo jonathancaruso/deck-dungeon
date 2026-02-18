@@ -106,7 +106,7 @@
 
 ## Medium Bugs
 
-### BUG-14: Event system ignores events.ts data entirely
+### BUG-14: Event system ignores events.ts data entirely ✅ FIXED
 - **Severity:** Medium
 - **File:** `src/components/EventScreen.tsx`
 - **Description:** EventScreen generates its own inline events with `useMemo` and `Math.random()`. The carefully designed events in `src/game/data/events.ts` are completely unused.

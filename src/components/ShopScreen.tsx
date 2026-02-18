@@ -34,7 +34,7 @@ export default function ShopScreen({ player, act, onBuyCard, onBuyPotion, onRemo
   const shopCards = useMemo(() => {
     const allCards = Object.values(CARDS).filter(c => c.rarity !== 'common' || Math.random() > 0.3)
     const shuffled = allCards.sort(() => Math.random() - 0.5)
-    return shuffled.slice(0, 5).map(c => ({ ...c, id: `shop-${c.id}-${Math.random().toString(36).slice(2)}` }))
+    return shuffled.slice(0, 5).map(c => ({ ...c, shopKey: `shop-${c.id}-${Math.random().toString(36).slice(2)}` }))
   }, [])
   
   const shopPotions = useMemo(() => {
@@ -51,12 +51,15 @@ export default function ShopScreen({ player, act, onBuyCard, onBuyPotion, onRemo
   const healCost = 30
   const removeCost = 75
   
-  const handleBuyCard = (card: Card) => {
+  const handleBuyCard = (card: Card & { shopKey?: string }) => {
     const price = getCardPrice(card)
-    if (player.gold < price || boughtCards.has(card.id)) return
-    onBuyCard(card)
+    const shopKey = card.shopKey || card.id
+    if (player.gold < price || boughtCards.has(shopKey)) return
+    // Pass card without shopKey to reducer so deck gets clean template ID
+    const { shopKey: _, ...cleanCard } = card
+    onBuyCard(cleanCard as Card)
     play('shop_buy')
-    setBoughtCards(prev => new Set(prev).add(card.id))
+    setBoughtCards(prev => new Set(prev).add(shopKey))
   }
   
   const handleBuyPotion = (potion: Potion) => {
@@ -101,11 +104,12 @@ export default function ShopScreen({ player, act, onBuyCard, onBuyPotion, onRemo
         <div className="flex flex-wrap justify-center gap-3">
           {shopCards.map(card => {
             const price = getCardPrice(card)
-            const bought = boughtCards.has(card.id)
+            const shopKey = (card as Card & { shopKey?: string }).shopKey || card.id
+            const bought = boughtCards.has(shopKey)
             const canAfford = player.gold >= price
             
             return (
-              <div key={card.id} className="flex flex-col items-center gap-2">
+              <div key={shopKey} className="flex flex-col items-center gap-2">
                 <div className={bought ? 'opacity-30 pointer-events-none' : ''}>
                   <CardComponent
                     card={card}
