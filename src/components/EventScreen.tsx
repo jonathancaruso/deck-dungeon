@@ -87,6 +87,66 @@ export default function EventScreen({ player, act, onGainGold, onHeal, onTakeDam
           { text: 'Ask for gold (+15 gold)', result: 'They toss you a pouch. "Buy something useful."', action: () => onGainGold(15) },
         ]
       },
+      {
+        title: 'Blood Altar',
+        icon: '🩸',
+        description: 'A stone altar stained dark with ancient offerings. The air hums with a hungry resonance. It wants something from you.',
+        choices: [
+          { text: 'Offer your blood (-12 HP, +7 Max HP)', result: 'Agony tears through you, but your body rebuilds stronger than before.', action: () => { onTakeDamage(12); onGainMaxHp(7) } },
+          { text: 'Offer gold (-30 gold, +20 HP)', result: 'The altar absorbs the coins. Warmth floods your veins.', action: () => { onGainGold(-30); onHeal(20) } },
+          { text: 'Back away slowly', result: 'The humming fades. Whatever dwells here lets you go... this time.', action: () => {} },
+        ]
+      },
+      {
+        title: 'The Hanging Cage',
+        icon: '🗝️',
+        description: 'A rusted cage dangles from a dead tree. Inside, a skeletal hand clutches a leather satchel. The lock looks breakable.',
+        choices: [
+          { text: 'Break the lock (+60 gold)', result: 'The cage crashes down. Inside the satchel: a fortune in old coins.', action: () => onGainGold(60) },
+          { text: 'Reach through the bars (-6 HP, +35 gold)', result: 'Jagged metal cuts your arm, but you snag some coins from the satchel.', action: () => { onTakeDamage(6); onGainGold(35) } },
+          { text: 'Leave the dead in peace', result: 'Some things are best left undisturbed.', action: () => {} },
+        ]
+      },
+      {
+        title: 'Whispering Shadows',
+        icon: '👁️',
+        description: 'The shadows coalesce into writhing shapes that speak in overlapping voices. They offer forbidden knowledge.',
+        choices: [
+          { text: 'Listen to their secrets (+5 Max HP, -15 HP)', result: 'Dark truths sear your mind. You stagger, but something deep within you has hardened.', action: () => { onGainMaxHp(5); onTakeDamage(15) } },
+          { text: 'Demand tribute (+45 gold)', result: 'The shadows shriek and scatter, leaving behind glittering trinkets.', action: () => onGainGold(45) },
+          { text: 'Banish them with light', result: 'You strike a flame. The shadows recoil and dissolve with a hiss.', action: () => onHeal(5) },
+        ]
+      },
+      {
+        title: 'The Bone Garden',
+        icon: '💀',
+        description: 'Flowers of pale bone grow from cracked earth. Among them, you spot a vial of luminous fluid and a buried coin purse.',
+        choices: [
+          { text: 'Take the vial (+15 HP)', result: 'The fluid tastes of starlight and ash. Your wounds knit closed.', action: () => onHeal(15) },
+          { text: 'Dig up the coin purse (+35 gold)', result: 'Dirt-caked coins, still good. You pocket them quickly.', action: () => onGainGold(35) },
+          { text: 'Pick a bone flower (+2 Max HP)', result: 'The flower crumbles to dust in your palm and seeps into your skin. You feel... denser.', action: () => onGainMaxHp(2) },
+        ]
+      },
+      {
+        title: 'Collapsing Bridge',
+        icon: '🌉',
+        description: 'A crumbling stone bridge spans a chasm. Below, something glints on a narrow ledge. The bridge groans under your weight.',
+        choices: [
+          { text: 'Sprint across (+10 gold)', result: 'You dash across as stones crumble behind you, snagging a dropped pouch mid-stride.', action: () => onGainGold(10) },
+          { text: 'Climb down for the treasure (-10 HP, +75 gold)', result: 'The descent is brutal, but the treasure trove on the ledge makes it worth every bruise.', action: () => { onTakeDamage(10); onGainGold(75) } },
+          { text: 'Find another way around', result: 'You take the long way. Safer, but you wonder what you missed.', action: () => onHeal(3) },
+        ]
+      },
+      {
+        title: 'Cursed Mirror',
+        icon: '🪞',
+        description: 'A tall mirror stands alone in a clearing. Your reflection moves independently, beckoning you closer with a cruel smile.',
+        choices: [
+          { text: 'Touch the glass (-5 HP, +4 Max HP)', result: 'Your reflection grabs your wrist. Cold fire races up your arm. When it releases you, you feel transformed.', action: () => { onTakeDamage(5); onGainMaxHp(4) } },
+          { text: 'Shatter it (+20 gold)', result: 'The mirror explodes into silver shards. Among the fragments: coins fused into the frame.', action: () => onGainGold(20) },
+          { text: 'Turn away', result: 'You hear it whisper your name as you leave. Best not to look back.', action: () => {} },
+        ]
+      },
     ]
     return events[Math.floor(Math.random() * events.length)]
   }, [])
