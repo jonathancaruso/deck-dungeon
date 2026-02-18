@@ -47,13 +47,16 @@ export default function CombatScreen({ combatState, onPlayCard, onEndTurn, onCom
   const slashCounter = useRef(0)
   const isFirstRender = useRef(true)
   
+  const onCombatEndRef = useRef(onCombatEnd)
+  onCombatEndRef.current = onCombatEnd
+  
   useEffect(() => {
     if (combatState.combatEnded && combatState.victory) {
       play('victory')
-      const timer = setTimeout(() => onCombatEnd(), 2000)
+      const timer = setTimeout(() => onCombatEndRef.current(), 2000)
       return () => clearTimeout(timer)
     }
-  }, [combatState.combatEnded, combatState.victory, onCombatEnd])
+  }, [combatState.combatEnded, combatState.victory])
 
   // Detect HP changes for damage/heal popups + hit animations + slash effects
   useEffect(() => {
@@ -397,7 +400,7 @@ export default function CombatScreen({ combatState, onPlayCard, onEndTurn, onCom
                 <div className="text-6xl mb-4 animate-victory">🏆</div>
                 <h2 className="text-3xl font-black text-green-400 mb-3 animate-victory">Victory!</h2>
                 <p className="text-gray-400 mb-4">Enemies defeated! Choose a card reward.</p>
-                <div className="text-xs text-gray-600">Proceeding...</div>
+                <button onClick={() => onCombatEndRef.current()} className="game-button mt-2">Continue</button>
               </>
             ) : (
               <>

@@ -10,7 +10,7 @@
 - [x] Mobile touch optimization
 
 - [x] Stats tracking (runs completed, cards played, enemies killed)
-- [ ] Daily challenge mode (seeded runs)
+- [x] Daily challenge mode (seeded runs)
 
 ## Done
 - [x] Save/load game state with Continue Run button (localStorage)
