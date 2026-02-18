@@ -115,6 +115,21 @@ export interface CombatState {
   victory: boolean
 }
 
+export interface LifetimeStats {
+  totalRuns: number
+  victories: number
+  deaths: number
+  totalFloorsCleared: number
+  totalEnemiesKilled: number
+  totalDamageDealt: number
+  totalCardsPlayed: number
+  totalGoldEarned: number
+  totalPlayTimeMs: number
+  bestFloor: number
+  fastestVictoryMs: number | null
+  longestRun: number
+}
+
 export interface GameState {
   player: Player
   currentAct: number

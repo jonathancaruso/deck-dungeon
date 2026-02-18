@@ -1,8 +1,10 @@
 'use client'
 
-import { useReducer, useEffect, useRef } from 'react'
+import { useReducer, useEffect, useRef, useState } from 'react'
 import { gameReducer, initialGameState } from '../game/utils/gameReducer'
+import { getLifetimeStats, recordRunEnd } from '../game/utils/lifetimeStats'
 import MainMenu from '../components/MainMenu'
+import StatsScreen from '../components/StatsScreen'
 import MapScreen from '../components/MapScreen'
 import CombatScreen from '../components/CombatScreen'
 import CardRewardScreen from '../components/CardRewardScreen'
@@ -26,6 +28,8 @@ function GameInner() {
   const [gameState, dispatch] = useReducer(gameReducer, initialGameState)
   const { play, muted, toggle } = useSoundContext()
   const prevPhase = useRef(gameState.gamePhase)
+  const [showStats, setShowStats] = useState(false)
+  const recordedRef = useRef(false)
 
   useEffect(() => {
     if (gameState.gamePhase !== 'menu') {
@@ -49,10 +53,16 @@ function GameInner() {
     else if (curr === 'event') play('button_click')
   }, [gameState.gamePhase, play])
 
-  // Clear save on game over or victory
+  // Clear save and record lifetime stats on game over or victory
   useEffect(() => {
     if (gameState.gamePhase === 'game_over' || gameState.gamePhase === 'victory') {
       localStorage.removeItem('deck-dungeon-save')
+      if (!recordedRef.current) {
+        recordedRef.current = true
+        recordRunEnd(gameState, gameState.gamePhase === 'victory')
+      }
+    } else if (gameState.gamePhase === 'map' || gameState.gamePhase === 'combat') {
+      recordedRef.current = false
     }
   }, [gameState.gamePhase])
 
@@ -120,10 +130,18 @@ function GameInner() {
 
       {/* Main Content */}
       <main className="flex-1 max-w-6xl mx-auto w-full p-3 sm:p-4">
-        {gameState.gamePhase === 'menu' && (
+        {gameState.gamePhase === 'menu' && !showStats && (
           <MainMenu 
             onStartGame={() => dispatch({ type: 'START_NEW_GAME' })} 
             onContinueGame={handleContinueGame}
+            onShowStats={() => setShowStats(true)}
+          />
+        )}
+
+        {gameState.gamePhase === 'menu' && showStats && (
+          <StatsScreen
+            stats={getLifetimeStats()}
+            onBack={() => setShowStats(false)}
           />
         )}
         

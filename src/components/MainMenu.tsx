@@ -5,9 +5,10 @@ import { useSoundContext } from '../hooks/SoundContext'
 interface MainMenuProps {
   onStartGame: () => void
   onContinueGame?: () => void
+  onShowStats?: () => void
 }
 
-export default function MainMenu({ onStartGame, onContinueGame }: MainMenuProps) {
+export default function MainMenu({ onStartGame, onContinueGame, onShowStats }: MainMenuProps) {
   const { muted, toggle, play } = useSoundContext()
   const [hasSave, setHasSave] = useState(false)
   const [saveInfo, setSaveInfo] = useState<{ act: number; floor: number; hp: number; maxHp: number } | null>(null)
@@ -67,12 +68,22 @@ export default function MainMenu({ onStartGame, onContinueGame }: MainMenuProps)
         ⚡ {hasSave ? 'New Run' : 'Start New Run'}
       </button>
       
-      <button
-        onClick={toggle}
-        className="mb-6 text-sm text-gray-400 hover:text-gray-200 transition-colors"
-      >
-        {muted ? '🔇 Sound Off' : '🔊 Sound On'}
-      </button>
+      <div className="flex items-center gap-4 mb-6">
+        {onShowStats && (
+          <button
+            onClick={() => { play('button_click'); onShowStats() }}
+            className="text-sm text-gray-400 hover:text-gray-200 transition-colors"
+          >
+            📊 Stats
+          </button>
+        )}
+        <button
+          onClick={toggle}
+          className="text-sm text-gray-400 hover:text-gray-200 transition-colors"
+        >
+          {muted ? '🔇 Sound Off' : '🔊 Sound On'}
+        </button>
+      </div>
 
       <div className="grid grid-cols-2 gap-3 text-sm text-gray-500 max-w-sm">
         <div className="panel p-3 text-center">
