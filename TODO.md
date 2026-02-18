@@ -9,7 +9,7 @@
 - [x] More event encounters
 - [x] Mobile touch optimization
 
-- [ ] Stats tracking (runs completed, cards played, enemies killed)
+- [x] Stats tracking (runs completed, cards played, enemies killed)
 - [ ] Daily challenge mode (seeded runs)
 
 ## Done

@@ -3,6 +3,7 @@
 import { useReducer, useEffect, useRef, useState } from 'react'
 import { gameReducer, initialGameState } from '../game/utils/gameReducer'
 import { getLifetimeStats, recordRunEnd } from '../game/utils/lifetimeStats'
+import { recordDailyResult } from '../game/utils/dailyChallenge'
 import MainMenu from '../components/MainMenu'
 import StatsScreen from '../components/StatsScreen'
 import MapScreen from '../components/MapScreen'
@@ -60,6 +61,9 @@ function GameInner() {
       if (!recordedRef.current) {
         recordedRef.current = true
         recordRunEnd(gameState, gameState.gamePhase === 'victory')
+        if (gameState.dailyChallenge) {
+          recordDailyResult(gameState, gameState.gamePhase === 'victory')
+        }
       }
     } else if (gameState.gamePhase === 'map' || gameState.gamePhase === 'combat') {
       recordedRef.current = false
@@ -89,6 +93,11 @@ function GameInner() {
           <div className="max-w-6xl mx-auto flex items-center justify-between gap-3 flex-wrap">
             <div className="flex items-center gap-2">
               <div className="text-lg font-black text-purple-400 tracking-tight">⚔️ Deck Dungeon</div>
+              {gameState.dailyChallenge && (
+                <span className="text-xs font-bold px-2 py-0.5 rounded bg-amber-600/30 text-amber-400 border border-amber-500/40">
+                  🏆 DAILY
+                </span>
+              )}
               <button
                 onClick={toggle}
                 className="text-lg opacity-60 hover:opacity-100 transition-opacity"
@@ -135,6 +144,7 @@ function GameInner() {
             onStartGame={() => dispatch({ type: 'START_NEW_GAME' })} 
             onContinueGame={handleContinueGame}
             onShowStats={() => setShowStats(true)}
+            onStartDaily={() => dispatch({ type: 'START_DAILY_CHALLENGE' })}
           />
         )}
 
@@ -214,6 +224,7 @@ function GameInner() {
           <GameOverScreen 
             runStats={gameState.runStats}
             onNewGame={() => dispatch({ type: 'START_NEW_GAME' })}
+            dailyChallenge={!!gameState.dailyChallenge}
           />
         )}
         
@@ -221,6 +232,7 @@ function GameInner() {
           <VictoryScreen 
             runStats={gameState.runStats}
             onNewGame={() => dispatch({ type: 'START_NEW_GAME' })}
+            dailyChallenge={!!gameState.dailyChallenge}
           />
         )}
       </main>

@@ -3,16 +3,21 @@ import { GameState } from '../game/types'
 interface VictoryScreenProps {
   runStats: GameState['runStats']
   onNewGame: () => void
+  dailyChallenge?: boolean
 }
 
-export default function VictoryScreen({ runStats, onNewGame }: VictoryScreenProps) {
+export default function VictoryScreen({ runStats, onNewGame, dailyChallenge }: VictoryScreenProps) {
   const playTime = Math.floor((Date.now() - runStats.startTime) / 1000 / 60)
   
   return (
     <div className="flex flex-col items-center justify-center min-h-[70vh] text-center animate-fade-in-up px-4">
       <div className="text-7xl mb-4">🏆</div>
-      <h1 className="text-4xl font-black text-yellow-400 mb-2">Victory!</h1>
-      <p className="text-gray-400 mb-8">You conquered the Deck Dungeon!</p>
+      <h1 className="text-4xl font-black text-yellow-400 mb-2">
+        {dailyChallenge ? 'Daily Challenge Complete!' : 'Victory!'}
+      </h1>
+      <p className="text-gray-400 mb-8">
+        {dailyChallenge ? 'You conquered today\'s challenge!' : 'You conquered the Deck Dungeon!'}
+      </p>
       
       <div className="panel p-6 max-w-md w-full border-yellow-600/30">
         <h2 className="text-lg font-bold mb-4 text-yellow-300">Run Stats</h2>

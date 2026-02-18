@@ -130,6 +130,15 @@ export interface LifetimeStats {
   longestRun: number
 }
 
+export interface DailyChallengeResult {
+  date: string
+  seed: number
+  score: number
+  floorsCleared: number
+  victory: boolean
+  timeMs: number
+}
+
 export interface GameState {
   player: Player
   currentAct: number
@@ -140,6 +149,10 @@ export interface GameState {
   combatState?: CombatState
   currentEvent?: GameEvent
   treasureReward?: { gold: number; relic?: Relic }
+  dailyChallenge?: {
+    seed: number
+    date: string
+  }
   runStats: {
     floorsCleared: number
     enemiesKilled: number

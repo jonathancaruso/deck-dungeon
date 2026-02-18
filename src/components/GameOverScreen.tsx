@@ -3,16 +3,19 @@ import { GameState } from '../game/types'
 interface GameOverScreenProps {
   runStats: GameState['runStats']
   onNewGame: () => void
+  dailyChallenge?: boolean
 }
 
-export default function GameOverScreen({ runStats, onNewGame }: GameOverScreenProps) {
+export default function GameOverScreen({ runStats, onNewGame, dailyChallenge }: GameOverScreenProps) {
   const playTime = Math.floor((Date.now() - runStats.startTime) / 1000 / 60)
   
   return (
     <div className="flex flex-col items-center justify-center min-h-[70vh] text-center animate-fade-in-up px-4">
       <div className="text-7xl mb-4">💀</div>
       <h1 className="text-4xl font-black text-red-400 mb-2">Defeat</h1>
-      <p className="text-gray-400 mb-8">Your journey ends here...</p>
+      <p className="text-gray-400 mb-8">
+        {dailyChallenge ? 'Daily Challenge failed. Try again tomorrow!' : 'Your journey ends here...'}
+      </p>
       
       <div className="panel p-6 max-w-md w-full">
         <h2 className="text-lg font-bold mb-4 text-gray-300">Run Stats</h2>

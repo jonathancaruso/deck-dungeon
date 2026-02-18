@@ -5,9 +5,11 @@ import { RELICS } from '../data/relics'
 import { POTIONS } from '../data/potions'
 import { generateMap, getAvailableNodes } from './mapGenerator'
 import { shuffleDeck, drawCards, applyCardEffects, processStatusEffects, enemyAI } from './combat'
+import { createRng, todaySeed, todayLabel } from './seededRng'
 
 export type GameAction = 
   | { type: 'START_NEW_GAME' }
+  | { type: 'START_DAILY_CHALLENGE' }
   | { type: 'ENTER_NODE'; nodeId: string }
   | { type: 'START_COMBAT'; enemies: string[] }
   | { type: 'PLAY_CARD'; cardId: string; cardIndex?: number; targetEnemyId?: string }
@@ -69,11 +71,44 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         ...initialGameState,
         map: generateMap(1),
         gamePhase: 'map',
+        dailyChallenge: undefined,
         runStats: {
           ...initialGameState.runStats,
           startTime: Date.now()
         }
       }
+    
+    case 'START_DAILY_CHALLENGE': {
+      const seed = todaySeed()
+      const rng = createRng(seed)
+      return {
+        ...initialGameState,
+        player: {
+          ...initialGameState.player,
+          hp: 60,
+          maxHp: 60,
+          gold: 50,
+          deck: STARTER_DECK.map(cardId => ({ ...CARDS[cardId] })),
+          relics: [],
+          potions: [],
+          statusEffects: {}
+        },
+        map: generateMap(1, rng),
+        gamePhase: 'map',
+        dailyChallenge: {
+          seed,
+          date: todayLabel()
+        },
+        runStats: {
+          floorsCleared: 0,
+          enemiesKilled: 0,
+          damageDealt: 0,
+          cardsPlayed: 0,
+          goldEarned: 0,
+          startTime: Date.now()
+        }
+      }
+    }
     
     case 'ENTER_NODE': {
       const node = state.map.find(n => n.id === action.nodeId)
@@ -587,11 +622,12 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       }
       
       const newAct = state.currentAct + 1
+      const actRng = state.dailyChallenge ? createRng(state.dailyChallenge.seed + newAct) : undefined
       return {
         ...state,
         currentAct: newAct,
         currentFloor: 0,
-        map: generateMap(newAct),
+        map: generateMap(newAct, actRng),
         gamePhase: 'map'
       }
     }

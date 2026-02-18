@@ -1,17 +1,22 @@
 import { useEffect, useState } from 'react'
 import { GameState } from '../game/types'
 import { useSoundContext } from '../hooks/SoundContext'
+import { hasCompletedToday, getTodayResult } from '../game/utils/dailyChallenge'
+import { todayLabel } from '../game/utils/seededRng'
 
 interface MainMenuProps {
   onStartGame: () => void
   onContinueGame?: () => void
   onShowStats?: () => void
+  onStartDaily?: () => void
 }
 
-export default function MainMenu({ onStartGame, onContinueGame, onShowStats }: MainMenuProps) {
+export default function MainMenu({ onStartGame, onContinueGame, onShowStats, onStartDaily }: MainMenuProps) {
   const { muted, toggle, play } = useSoundContext()
   const [hasSave, setHasSave] = useState(false)
   const [saveInfo, setSaveInfo] = useState<{ act: number; floor: number; hp: number; maxHp: number } | null>(null)
+  const [dailyDone, setDailyDone] = useState(false)
+  const [dailyScore, setDailyScore] = useState<number | null>(null)
 
   useEffect(() => {
     try {
@@ -29,6 +34,10 @@ export default function MainMenu({ onStartGame, onContinueGame, onShowStats }: M
         }
       }
     } catch {}
+    // Check daily challenge
+    setDailyDone(hasCompletedToday())
+    const result = getTodayResult()
+    if (result) setDailyScore(result.score)
   }, [])
 
   return (
@@ -63,10 +72,34 @@ export default function MainMenu({ onStartGame, onContinueGame, onShowStats }: M
           play('button_click')
           onStartGame()
         }}
-        className={`game-button text-xl px-10 py-5 mb-8 bg-gradient-to-b from-purple-600 to-purple-800 border-purple-400/50 hover:shadow-xl hover:shadow-purple-500/20 ${hasSave ? 'opacity-80' : ''}`}
+        className={`game-button text-xl px-10 py-5 mb-4 bg-gradient-to-b from-purple-600 to-purple-800 border-purple-400/50 hover:shadow-xl hover:shadow-purple-500/20 ${hasSave ? 'opacity-80' : ''}`}
       >
         ⚡ {hasSave ? 'New Run' : 'Start New Run'}
       </button>
+      
+      {onStartDaily && (
+        <button
+          onClick={() => {
+            if (dailyDone) return
+            play('button_click')
+            localStorage.removeItem('deck-dungeon-save')
+            onStartDaily()
+          }}
+          disabled={dailyDone}
+          className={`game-button text-lg px-10 py-4 mb-8 bg-gradient-to-b ${
+            dailyDone
+              ? 'from-gray-600 to-gray-800 border-gray-500/50 opacity-60 cursor-not-allowed'
+              : 'from-amber-600 to-amber-800 border-amber-400/50 hover:shadow-xl hover:shadow-amber-500/20'
+          }`}
+        >
+          🏆 Daily Challenge
+          <span className="block text-sm mt-1 opacity-80">
+            {dailyDone
+              ? `Completed! Score: ${dailyScore}`
+              : `${todayLabel()} · Same map for everyone`}
+          </span>
+        </button>
+      )}
       
       <div className="flex items-center gap-4 mb-6">
         {onShowStats && (

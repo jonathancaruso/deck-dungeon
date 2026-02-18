@@ -1,6 +1,9 @@
 import { MapNode, NodeType } from '../types'
 
-export function generateMap(act: number): MapNode[] {
+type RngFn = () => number
+
+export function generateMap(act: number, rng?: RngFn): MapNode[] {
+  const rand = rng || Math.random
   const nodes: MapNode[] = []
   const floors = 15
   const pathsPerFloor = 3
@@ -21,9 +24,9 @@ export function generateMap(act: number): MapNode[] {
       } else if (floor === floors - 1) {
         nodeType = 'boss' // Always end with boss
       } else if (floor === Math.floor(floors / 2)) {
-        nodeType = Math.random() < 0.3 ? 'rest' : getRandomNodeType()
+        nodeType = rand() < 0.3 ? 'rest' : getRandomNodeType(rand)
       } else {
-        nodeType = getRandomNodeType()
+        nodeType = getRandomNodeType(rand)
       }
       
       const node: MapNode = {
@@ -47,10 +50,10 @@ export function generateMap(act: number): MapNode[] {
     
     currentFloorNodes.forEach((currentNode, index) => {
       // Each node connects to 1-2 nodes in the next floor
-      const connections = Math.random() < 0.6 ? 1 : 2
+      const connections = rand() < 0.6 ? 1 : 2
       
       for (let i = 0; i < connections; i++) {
-        let targetIndex = index + (i === 0 ? 0 : (Math.random() < 0.5 ? -1 : 1))
+        let targetIndex = index + (i === 0 ? 0 : (rand() < 0.5 ? -1 : 1))
         targetIndex = Math.max(0, Math.min(nextFloorNodes.length - 1, targetIndex))
         
         const targetNode = nextFloorNodes[targetIndex]
@@ -64,7 +67,7 @@ export function generateMap(act: number): MapNode[] {
   return nodes
 }
 
-function getRandomNodeType(): NodeType {
+function getRandomNodeType(rand: RngFn = Math.random): NodeType {
   const weights = {
     combat: 0.5,
     elite: 0.1,
@@ -74,7 +77,7 @@ function getRandomNodeType(): NodeType {
     treasure: 0.05
   }
   
-  const random = Math.random()
+  const random = rand()
   let cumulative = 0
   
   for (const [type, weight] of Object.entries(weights)) {
