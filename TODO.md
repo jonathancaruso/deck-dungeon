@@ -7,7 +7,7 @@
 - [x] More card variety (Act 2/3 exclusive cards)
 - [x] Additional relics
 - [x] More event encounters
-- [ ] Mobile touch optimization
+- [x] Mobile touch optimization
 
 - [ ] Stats tracking (runs completed, cards played, enemies killed)
 - [ ] Daily challenge mode (seeded runs)
