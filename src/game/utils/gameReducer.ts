@@ -687,7 +687,7 @@ function startCombat(state: GameState, enemyIds: string[]): GameState {
   
   startEnergy = Math.max(startEnergy, startMaxEnergy)
   
-  const combatPlayer = { ...state.player, block: startBlock }
+  const combatPlayer = { ...state.player, block: startBlock, statusEffects: {} }
   
   // Relic: combat_strength
   if (playerRelics.some(r => r.effect === 'combat_strength')) {
