@@ -246,6 +246,11 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       
       // Update run stats will be handled in main game state
       
+      // Calculate actual damage dealt by comparing enemy HP before and after
+      const totalHpBefore = state.combatState.enemies.reduce((sum, e) => sum + Math.max(0, e.hp), 0)
+      const totalHpAfter = updatedCombatState.enemies.reduce((sum, e) => sum + Math.max(0, e.hp), 0)
+      const actualDamageDealt = totalHpBefore - totalHpAfter
+
       // Relic: kill_strength — gain 2 Strength when killing an enemy
       const enemiesBefore = state.combatState.enemies.filter(e => e.hp > 0).length
       const aliveEnemies = updatedCombatState.enemies.filter(e => e.hp > 0)
@@ -265,7 +270,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const newRunStats = {
         ...state.runStats,
         cardsPlayed: state.runStats.cardsPlayed + 1,
-        damageDealt: state.runStats.damageDealt + (card.damage || 0),
+        damageDealt: state.runStats.damageDealt + actualDamageDealt,
         enemiesKilled: state.runStats.enemiesKilled + enemiesKilledNow
       }
 
