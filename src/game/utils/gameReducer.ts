@@ -149,7 +149,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
             treasureRelic = availableRelics[Math.floor(Math.random() * availableRelics.length)]
             treasurePlayer.relics = [...treasurePlayer.relics, treasureRelic]
           }
-          return { ...newState, player: treasurePlayer, gamePhase: 'treasure', treasureReward: { gold: goldReward, relic: treasureRelic } }
+          return { ...newState, player: treasurePlayer, gamePhase: 'treasure', treasureReward: { gold: goldReward, relic: treasureRelic }, runStats: { ...newState.runStats, goldEarned: newState.runStats.goldEarned + goldReward } }
         }
         
         default:
@@ -400,6 +400,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       // FIX BUG-13: Grant gold reward after combat
       const goldReward = 15 + Math.floor(Math.random() * 10) + (state.currentNode?.type === 'elite' ? 15 : 0) + (state.currentNode?.type === 'boss' ? 30 : 0)
       newState.player = { ...newState.player, gold: newState.player.gold + goldReward }
+      let combatGoldTotal = goldReward
       
       // Apply relic effects after combat
       if (newState.player.relics.some(r => r.effect === 'hp_after_combat') && state.currentNode?.type !== 'boss') {
@@ -407,13 +408,16 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       }
       if (newState.player.relics.some(r => r.effect === 'gold_per_combat')) {
         newState.player = { ...newState.player, gold: newState.player.gold + 10 }
+        combatGoldTotal += 10
       }
       if (newState.player.relics.some(r => r.effect === 'heal_after_combat')) {
         newState.player = { ...newState.player, hp: Math.min(newState.player.maxHp, newState.player.hp + 2) }
       }
       if (newState.player.relics.some(r => r.effect === 'extra_gold_5')) {
         newState.player = { ...newState.player, gold: newState.player.gold + 5 }
+        combatGoldTotal += 5
       }
+      newState.runStats = { ...newState.runStats, goldEarned: newState.runStats.goldEarned + combatGoldTotal }
       
       // Update map availability
       newState.map = getAvailableNodes([...state.map], state.currentNode?.id)
@@ -581,7 +585,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
     
     case 'EVENT_GAIN_GOLD':
-      return { ...state, player: { ...state.player, gold: state.player.gold + action.amount } }
+      return { ...state, player: { ...state.player, gold: state.player.gold + action.amount }, runStats: { ...state.runStats, goldEarned: state.runStats.goldEarned + action.amount } }
     
     case 'EVENT_HEAL':
       return { ...state, player: { ...state.player, hp: Math.min(state.player.maxHp, state.player.hp + action.amount) } }
