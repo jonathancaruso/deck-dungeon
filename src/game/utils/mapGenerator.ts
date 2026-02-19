@@ -91,18 +91,21 @@ function getRandomNodeType(rand: RngFn = Math.random): NodeType {
 }
 
 export function getAvailableNodes(nodes: MapNode[], completedNodeId?: string): MapNode[] {
+  // Clone all node objects to avoid mutating React state directly (BUG-18 fix)
+  const clonedNodes = nodes.map(n => ({ ...n }))
+
   if (!completedNodeId) {
-    return nodes.filter(n => n.available && !n.completed)
+    return clonedNodes
   }
   
-  const completedNode = nodes.find(n => n.id === completedNodeId)
-  if (!completedNode) return nodes.filter(n => n.available)
+  const completedNode = clonedNodes.find(n => n.id === completedNodeId)
+  if (!completedNode) return clonedNodes
   
   // Mark completed node as completed
   completedNode.completed = true
   
   // Mark all other nodes on the same floor as unavailable
-  nodes.forEach(n => {
+  clonedNodes.forEach(n => {
     if (n.y === completedNode.y && n.id !== completedNode.id) {
       n.available = false
     }
@@ -110,13 +113,13 @@ export function getAvailableNodes(nodes: MapNode[], completedNodeId?: string): M
   
   // Make connected nodes available
   completedNode.connections.forEach(connectionId => {
-    const connectedNode = nodes.find(n => n.id === connectionId)
+    const connectedNode = clonedNodes.find(n => n.id === connectionId)
     if (connectedNode && !connectedNode.completed) {
       connectedNode.available = true
     }
   })
   
-  return nodes.filter(n => n.available && !n.completed)
+  return clonedNodes
 }
 
 export function getNodeTypeIcon(nodeType: NodeType): string {

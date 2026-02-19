@@ -124,13 +124,13 @@
 - **Description:** Cards get IDs like `shop-strike-abc123`. This could break any logic relying on matching card IDs to template IDs (e.g., upgrade logic, card mastery relic).
 - **Fix:** Use proper unique instance IDs separate from template IDs, or keep original IDs.
 
-### BUG-17: Thorns Ring relic sets no thorns on combat start
+### BUG-17: Thorns Ring relic sets no thorns on combat start ✅ FIXED
 - **Severity:** Medium
 - **File:** `src/game/utils/gameReducer.ts` — `startCombat()`
 - **Description:** The `thorns_passive` relic should give the player 1 thorns damage, but there's no code to set `combatPlayer.statusEffects.thorns` for this relic on combat start.
 - **Fix:** Add thorns status effect on combat start for this relic.
 
-### BUG-18: Map `getAvailableNodes` mutates node state directly
+### BUG-18: Map `getAvailableNodes` mutates node state directly ✅ FIXED
 - **Severity:** Medium
 - **File:** `src/game/utils/mapGenerator.ts` — `getAvailableNodes()`
 - **Description:** This function mutates the `nodes` array objects directly (setting `completed`, `available`). This can cause React state mutation bugs since it's called with `state.map` nodes.

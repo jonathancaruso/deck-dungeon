@@ -8,7 +8,8 @@ interface MapScreenProps {
 }
 
 export default function MapScreen({ gameState, onEnterNode }: MapScreenProps) {
-  const availableNodes = getAvailableNodes(gameState.map)
+  const allNodes = getAvailableNodes(gameState.map)
+  const availableNodeIds = new Set(allNodes.filter(n => n.available && !n.completed).map(n => n.id))
   const scrollRef = useRef<HTMLDivElement>(null)
   
   // Group nodes by floor
@@ -65,7 +66,7 @@ export default function MapScreen({ gameState, onEnterNode }: MapScreenProps) {
       >
         {floors.map((floor, floorIdx) => {
           const nodes = groupedNodes[floor]
-          const isCurrentFloor = availableNodes.some(n => n.y === floor)
+          const isCurrentFloor = nodes.some(n => availableNodeIds.has(n.id))
           
           return (
             <div key={floor} className="mb-6 last:mb-0">
@@ -77,7 +78,7 @@ export default function MapScreen({ gameState, onEnterNode }: MapScreenProps) {
               {/* Nodes row */}
               <div className="flex justify-center gap-3 sm:gap-4">
                 {nodes.map(node => {
-                  const isAvailable = availableNodes.includes(node)
+                  const isAvailable = availableNodeIds.has(node.id)
                   const isCompleted = node.completed
                   
                   return (

@@ -411,8 +411,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       }
       
       // Update map availability
-      newState.map = [...state.map]
-      getAvailableNodes(newState.map, state.currentNode?.id)
+      newState.map = getAvailableNodes([...state.map], state.currentNode?.id)
       newState.runStats.floorsCleared++
       
       // BUG-03 FIX: If boss was defeated, advance act instead of returning to map
@@ -454,8 +453,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       }
       
       // Update map and return to map
-      newState.map = [...state.map]
-      getAvailableNodes(newState.map, state.currentNode?.id)
+      newState.map = getAvailableNodes([...state.map], state.currentNode?.id)
       newState.runStats.floorsCleared++
       
       return {
@@ -489,8 +487,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       }
       
       // Update map and return to map
-      newState.map = [...state.map]
-      getAvailableNodes(newState.map, state.currentNode?.id)
+      newState.map = getAvailableNodes([...state.map], state.currentNode?.id)
       newState.runStats.floorsCleared++
       
       return {
@@ -516,8 +513,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       }
       
       // Update map and return to map
-      newState.map = [...state.map]
-      getAvailableNodes(newState.map, state.currentNode?.id)
+      newState.map = getAvailableNodes([...state.map], state.currentNode?.id)
       newState.runStats.floorsCleared++
       
       return {
@@ -596,24 +592,21 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     
     case 'COLLECT_TREASURE': {
       const newState = { ...state }
-      newState.map = [...state.map]
-      getAvailableNodes(newState.map, state.currentNode?.id)
+      newState.map = getAvailableNodes([...state.map], state.currentNode?.id)
       newState.runStats = { ...state.runStats, floorsCleared: state.runStats.floorsCleared + 1 }
       return { ...newState, gamePhase: 'map', currentNode: undefined, treasureReward: undefined }
     }
 
     case 'LEAVE_EVENT': {
       const newState = { ...state }
-      newState.map = [...state.map]
-      getAvailableNodes(newState.map, state.currentNode?.id)
+      newState.map = getAvailableNodes([...state.map], state.currentNode?.id)
       newState.runStats = { ...state.runStats, floorsCleared: state.runStats.floorsCleared + 1 }
       return { ...newState, gamePhase: 'map', currentNode: undefined }
     }
     
     case 'LEAVE_SHOP': {
       const newState = { ...state }
-      newState.map = [...state.map]
-      getAvailableNodes(newState.map, state.currentNode?.id)
+      newState.map = getAvailableNodes([...state.map], state.currentNode?.id)
       newState.runStats = { ...state.runStats, floorsCleared: state.runStats.floorsCleared + 1 }
       return { ...newState, gamePhase: 'map', currentNode: undefined }
     }
