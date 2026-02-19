@@ -339,8 +339,8 @@ export function processStatusEffects(combatState: CombatState): CombatState {
     playerEffects.poison = (playerEffects.poison || 1) - 1
   }
   
-  // Regeneration
-  if ((playerEffects.regen || 0) > 0) {
+  // Regeneration (don't heal if already dead)
+  if ((playerEffects.regen || 0) > 0 && newState.player.hp > 0) {
     newState.player.hp = Math.min(newState.player.maxHp, newState.player.hp + (playerEffects.regen || 0))
   }
   

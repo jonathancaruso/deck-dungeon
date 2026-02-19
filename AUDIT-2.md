@@ -142,7 +142,7 @@
 - **Description:** Sentinel's special unconditionally gives 2 energy. It happens to always exhaust (has `exhaust: true`), but if Corruption is active, skills exhaust anyway — this is fine. However, the code doesn't actually check the exhaust condition.
 - **Fix:** Low priority since it always exhausts, but should be conditional for correctness.
 
-### BUG-20: Rest screen Remove only allows common cards and Strikes/Defends
+### BUG-20: Rest screen Remove only allows common cards and Strikes/Defends ✅ FIXED
 - **Severity:** Medium
 - **File:** `src/components/RestScreen.tsx`
 - **Description:** `removableCards` filters to `card.rarity === 'common' || card.name.includes('Strike') || card.name.includes('Defend')`. Players can't remove uncommon/rare cards or Wounds.
