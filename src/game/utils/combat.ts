@@ -228,7 +228,7 @@ function handleSpecialEffects(special: string, combatState: CombatState, targetE
     }
     case 'disarm':
       if (targetEnemy) {
-        targetEnemy.statusEffects.strength = Math.max(0, (targetEnemy.statusEffects.strength || 0) - 2)
+        targetEnemy.statusEffects.strength = (targetEnemy.statusEffects.strength || 0) - 2
       }
       break
     case 'temporary':

@@ -136,7 +136,7 @@
 - **Description:** This function mutates the `nodes` array objects directly (setting `completed`, `available`). This can cause React state mutation bugs since it's called with `state.map` nodes.
 - **Fix:** The reducer already spreads the map array, but the individual node objects inside are still mutated. Should clone nodes being modified.
 
-### BUG-19: Sentinel always gives 2 energy even if not exhausted
+### BUG-19: Sentinel always gives 2 energy even if not exhausted ✅ FIXED
 - **Severity:** Medium
 - **File:** `src/game/utils/combat.ts` — `handleSpecialEffects('sentinel')`
 - **Description:** Sentinel's special unconditionally gives 2 energy. It happens to always exhaust (has `exhaust: true`), but if Corruption is active, skills exhaust anyway — this is fine. However, the code doesn't actually check the exhaust condition.
@@ -152,13 +152,13 @@
 
 ## Low Bugs
 
-### BUG-21: Enemy kill count in runStats only increments by 1 on total wipe
+### BUG-21: Enemy kill count in runStats only increments by 1 on total wipe ✅ FIXED
 - **Severity:** Low
 - **File:** `src/game/utils/gameReducer.ts` — `PLAY_CARD`
 - **Description:** `enemiesKilled: state.runStats.enemiesKilled + (aliveEnemies.length === 0 ? 1 : 0)` — only counts 1 when ALL enemies die, not individual kills.
 - **Fix:** Use `enemiesKilledNow` variable which already tracks individual kills.
 
-### BUG-22: Disarm can't reduce strength below 0
+### BUG-22: Disarm can't reduce strength below 0 ✅ FIXED
 - **Severity:** Low
 - **File:** `src/game/utils/combat.ts` — `handleSpecialEffects('disarm')`
 - **Description:** Uses `Math.max(0, ...)` so can't give negative strength. In Slay the Spire, Disarm reduces strength which can go negative.
