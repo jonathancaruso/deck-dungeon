@@ -17,7 +17,7 @@ export default function RestScreen({ player, onRestHeal, onRestUpgrade, onRestRe
   const healAmount = Math.floor(player.maxHp * 0.3)
   const canHeal = player.hp < player.maxHp
   const upgradableCards = player.deck.filter(card => !card.upgraded)
-  const removableCards = player.deck.filter(card => card.rarity === 'common' || card.name.includes('Strike') || card.name.includes('Defend'))
+  const removableCards = [...player.deck]
   
   if (mode === 'upgrade') {
     return (
