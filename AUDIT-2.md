@@ -164,7 +164,7 @@
 - **Description:** Uses `Math.max(0, ...)` so can't give negative strength. In Slay the Spire, Disarm reduces strength which can go negative.
 - **Fix:** Remove the `Math.max(0, ...)` to allow negative strength.
 
-### BUG-23: Run stats damageDealt uses card.damage not actual damage dealt
+### BUG-23: Run stats damageDealt uses card.damage not actual damage dealt ✅ FIXED
 - **Severity:** Low
 - **File:** `src/game/utils/gameReducer.ts` — `PLAY_CARD`
 - **Description:** `damageDealt: state.runStats.damageDealt + (card.damage || 0)` doesn't account for strength, vulnerable, multi-hit, etc.
