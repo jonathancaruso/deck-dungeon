@@ -319,11 +319,15 @@ function handleSpecialEffects(special: string, combatState: CombatState, targetE
       combatState.discardPile.push(woundCard)
       break
     }
-    case 'sentinel':
-      // Block already applied. Energy on exhaust handled by exhaust logic if needed.
-      // For simplicity, grant 2 energy since it always exhausts
-      combatState.energy += 2
+    case 'sentinel': {
+      // Grant 2 energy only if the card will be exhausted
+      const hasCorruption = combatState.activePowers.some(p => p.special === 'corruption')
+      const willExhaust = !!(card?.exhaust || (hasCorruption && card?.type === 'skill'))
+      if (willExhaust) {
+        combatState.energy += 2
+      }
       break
+    }
   }
 }
 
