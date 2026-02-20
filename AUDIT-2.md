@@ -170,7 +170,7 @@
 - **Description:** `damageDealt: state.runStats.damageDealt + (card.damage || 0)` doesn't account for strength, vulnerable, multi-hit, etc.
 - **Fix:** Track actual damage dealt in applyDamageToEnemy.
 
-### BUG-24: goldEarned in runStats is never incremented
+### BUG-24: goldEarned in runStats is never incremented ✅ FIXED
 - **Severity:** Low
 - **File:** `src/game/utils/gameReducer.ts`
 - **Description:** `runStats.goldEarned` starts at 0 and is never updated when gaining gold.

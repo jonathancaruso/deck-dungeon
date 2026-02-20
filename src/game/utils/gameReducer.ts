@@ -318,6 +318,17 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       // Process status effects
       newCombatState = processStatusEffects(newCombatState)
       
+      // Check if all enemies died during END_TURN (poison, thorns, Juggernaut, etc.)
+      const aliveAfterTurn = newCombatState.enemies.filter(e => e.hp > 0)
+      if (aliveAfterTurn.length === 0) {
+        newCombatState.combatEnded = true
+        newCombatState.victory = true
+        return {
+          ...state,
+          combatState: newCombatState
+        }
+      }
+      
       // Check for player death
       if (newCombatState.player.hp <= 0) {
         // BUG-04 FIX: Phoenix Feather — revive once
